@@ -14,6 +14,17 @@ Now compile and install
 ```
 $ meson install -C build
 ```
+## Resolving Build Errors
+If you get certificate verify errors then execute the following commands in msys2 (mingw64)
+```
+$ pacman -S mingw-w64-x86_64-ca-certificates
+$ update-ca-trust
+```
+If you're in linux then execute the following commands
+```
+$ sudo apt-get install ca-certifactes
+$ update-ca-trust
+```
 
 ## Usage
 ```
