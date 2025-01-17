@@ -47,6 +47,8 @@ sources = files('source/main.cpp')
 # Whether to install executable?
 is_install_executable = true
 
+dependencies = [ dependency('cli11') ]
+
 # ------------------------------ INTERNALS ---------------------------------------
 
 # Compiler configuration
@@ -71,6 +73,7 @@ endif
 # Main executable
 exe = executable('build_master',
   sources,
+  dependencies: dependencies,
   include_directories : inc,
   install : is_install_executable
 )
