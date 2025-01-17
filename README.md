@@ -36,44 +36,57 @@ The above command would compile the project
 ## Build Master config file
 ```json
 {
+	// This project name could be anything (it is not used as filename for any of the build artifacts)
 	"project_name" : "BufferLib",
+	// This is similar to the project name but it is used for file names, so it must form a valid file name
 	"conanical_name" : "bufferlib",
+	// Dependencies of this project (for all of its targets)
 	"dependencies" : [ "calltrace" ],
 	"release_defines": [ "-DBUF_RELEASE" ],
 	"debug_defines": [ "-DBUF_DEBUG" ],
+	// All of the subdirectories inside include will be installed into the environment's include directory
+	// Typically you use should structure your project to have 'include/bufferlib' subdir. 
 	"header_dir" : "include",
 	"targets" :
 	{
 		"bufferlib_static" :
 		{
 			"is_static_library" : true,
+			// These defines will be enabled when building bufferlib_static target
 			"build_defines" : [ "-DBUF_BUILD_STATIC_LIBRARY" ],
+			// These defines will be added as extra_cflags in pkg-config files
 			"use_defines" : [ "-DBUF_USE_STATIC_LIBRARY" ]
 		},
 		"bufferlib_shared" : 
 		{
 			"is_shared_library" : true,
+			// These defines will be enabled when building bufferlib_shared target
 			"build_defines" : [ "-DBUF_BUILD_SHARED_LIBRARY" ],
+			// These defines will be added as extra_cflags in pkg-config files
 			"use_defines" : [ "-DBUF_USE_SHARED_LIBRARY" ]
 		},
 		"client" :
 		{
 			"is_executable" : true,
 			"defines" : [ "-DCLIENT_BUILD" ],
+			// These source files are specific (in addition) to client target
 			"sources" : [ "source/main.client.c" ]
 		},
 		"server" :
 		{
 			"is_executable" : true,
 			"defines" : [ "-DSERVER_BUILD" ],
+			// These source files are specific (in addition) to server target
 			"sources" : [ "source/main.server.c" ]
 		},
 		"main" :
 		{
 			"is_executable" : true,
+			// These source files are specific (in addition) to main target
 			"sources" : [ "source/main.c" ]
 		}
 	},
+	// These source files will be compiled in each target as common source files
 	"sources" :
 	[
 		"source/buffer.c",
