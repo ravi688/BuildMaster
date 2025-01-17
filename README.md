@@ -1,6 +1,20 @@
 # BuildMaster
 BuildMaster is a wrapper around meson to make project configuration convenient, and faster.
 
+## Building and Installing
+Get the source code
+```
+$ git clone https://github.com/ravi688/BuildMaster.git
+```
+Setup build configuration
+```
+$ meson setup build --buildtype=release
+```
+Now compile and install
+```
+$ mesonn install -C build
+```
+
 ## Usage
 Following command must be run in the root directory of the project and where `build_master.json` file also exists:
 ```
@@ -51,7 +65,12 @@ $ build_master -f build_master.json <meson args>
 			"is_executable" : true,
 			"sources" : [ "source/main.c" ]
 		}
-	}
+	},
+	"sources" :
+	[
+		"source/buffer.c",
+		"source/buffer_test.c"
+	]
 }
 ```
 ### Optional variables
