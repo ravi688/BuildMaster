@@ -47,7 +47,7 @@ sources = files('source/main.cpp')
 # Whether to install executable?
 is_install_executable = true
 
-dependencies = [ dependency('cli11') ]
+dependencies = [ dependency('cli11'), dependency('nlohmann_json') ]
 
 # ------------------------------ INTERNALS ---------------------------------------
 
