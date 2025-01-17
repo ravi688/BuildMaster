@@ -1,5 +1,5 @@
 # BuildMaster
-BuildMaster is a wrapper around meson to make project configuration convenient, and faster.
+BuildMaster is a wrapper around meson to make C/C++ project configuration convenient, and faster.
 
 ## Building and Installing
 Get the source code
