@@ -12,18 +12,26 @@ $ meson setup build --buildtype=release
 ```
 Now compile and install
 ```
-$ mesonn install -C build
+$ meson install -C build
 ```
 
 ## Usage
-Following command must be run in the root directory of the project and where `build_master.json` file also exists:
 ```
-$ build_master <meson args>
+$ build_master init --name "BufferLib"
 ```
-OR
+The above commanad would create a file `build_master.json` containing default project configuration and `meson.build` for meson build system
 ```
-$ build_master -f build_master.json <meson args>
+$ build_master --meson setup build --buildtype=release
 ```
+The above command would invoke `meson setup build --buildtype=release` which will create a `build` directory and configure the project build config as release
+```
+$ build_master --meson compile -C build
+```
+The above command would compile the project
+
+## More Info
+- If `build_master.json` already exists then running `build_master init --name "BufferLib"` would produce an error/warning, to overwrite the existing file pass '--force' flag
+- **IMPORTANT** - If `build_master.json` is modified then running `build_master` command would regenerate the `meson.build` file overwritting the existing one 
 
 ## Build Master config file
 ```json
