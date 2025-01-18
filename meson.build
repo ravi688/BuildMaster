@@ -56,7 +56,7 @@ sources = files('source/main.cpp')
 # Whether to install executable?
 is_install_executable = true
 
-dependencies = [ dependency('cli11'), dependency('nlohmann_json') ]
+dependencies = [ dependency('cli11'), dependency('nlohmann_json'), dependency('reproc') ]
 
 # ------------------------------ INTERNALS ---------------------------------------
 
@@ -64,8 +64,8 @@ dependencies = [ dependency('cli11'), dependency('nlohmann_json') ]
 add_project_arguments('-m64', language : 'c')
 add_project_arguments('-m64', language : 'cpp')
 # Linker configuration
-add_project_link_arguments('-m64', language : 'c')
-add_project_link_arguments('-m64', language : 'cpp')
+add_project_link_arguments('-m64', '-lws2_32', language : 'c')
+add_project_link_arguments('-m64', '-lws2_32', language : 'cpp')
 
 # Build type specific defines
 if get_option('buildtype') == 'release'

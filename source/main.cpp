@@ -8,6 +8,7 @@
 
 #include <CLI/CLI.hpp>
 #include <nlohmann/json.hpp>
+#include <reproc/run.h>
 
 // NOTE: Following defines are Automatically Defined by the Build System (meson.build)
 // BUILDMASTER_VERSION_MAJOR
@@ -442,12 +443,27 @@ static void IntializeProject(std::string_view projectName, std::string_view cano
 	std::cout << "Success: build_master.json is generated\n";
 }
 
+static std::ostream& operator<<(std::ostream& stream, const std::vector<std::string>& v)
+{
+	for(const auto& value : v)
+		stream << value << " ";
+	return stream;
+}
+
 // build_master meson
 static void InvokeMeson(const std::vector<std::string>& args)
 {
 	// Ensure the meson.build script is upto date
 	RegenerateMesonBuildScript();
-	std::copy(args.begin(), args.end(), std::ostream_iterator<std::string>(std::cout, ", "));
+	// Build c-style argument list
+  	std::vector<const char*> cArgs;
+  	cArgs.reserve(args.size() + 1);
+  	cArgs.push_back("meson");
+  	for(const auto& arg : args)
+  		cArgs.push_back(arg.data());
+  	std::cout << "Running meson with args: " << args << "\n";
+  	// Execute the meson command with the built arguments
+  	exit(reproc_run(cArgs.data(), { }));
 }
 
 static void PrintVersionInfo() noexcept
