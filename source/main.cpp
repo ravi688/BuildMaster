@@ -417,13 +417,13 @@ static void IntializeProject(std::string_view projectName, std::string_view cano
 	}
 	json buildMasterJson = 
 	{
-		{ "include_dirs", "include" },
-		{ "install_header_dirs", std::format("include/{}", canonicalName) },
-		{ "canonical_name", canonicalName },
 		{ "project_name" , projectName },
+		{ "canonical_name", canonicalName },
+		{ "include_dirs", "include" },
 		{ "targets",
-			{ canonicalName, 
-				{
+			{			
+				{ 
+					{ "name", canonicalName },
 					{ "is_executable", true },
 					{ "sources", { "source/main.c" } }
 				}
