@@ -40,7 +40,12 @@ debug_defines = [
 
 meson_build_template_install_dir = join_paths(get_option('prefix'), 'share', 'build_master')
 
-defines = [ '-DMESON_BUILD_TEMPLATE_PATH="' + join_paths(meson_build_template_install_dir, 'meson.build.template') + '"' ]
+defines = [
+  '-DBUILDMASTER_VERSION_MAJOR=' + meson.project_version().split('.')[0],
+  '-DBUILDMASTER_VERSION_MINOR=' + meson.project_version().split('.')[1],
+  '-DBUILDMASTER_VERSION_MICRO=' + meson.project_version().split('.')[2], 
+  '-DMESON_BUILD_TEMPLATE_PATH="' + join_paths(meson_build_template_install_dir, 'meson.build.template') + '"'
+]
 
 # Include directories
 inc = include_directories('include/build_master')
