@@ -38,6 +38,10 @@ debug_defines = [
   '-DBUILD_MASTER_DEBUG'
 ]
 
+meson_build_template_install_dir = join_paths(get_option('prefix'), 'share', 'build_master')
+
+defines = [ '-DMESON_BUILD_TEMPLATE_PATH="' + join_paths(meson_build_template_install_dir, 'meson.build.template') + '"' ]
+
 # Include directories
 inc = include_directories('include/build_master')
 
@@ -59,15 +63,12 @@ add_project_link_arguments('-m64', language : 'c')
 add_project_link_arguments('-m64', language : 'cpp')
 
 # Build type specific defines
-build_mode_defines = []
 if get_option('buildtype') == 'release'
-  add_project_arguments(release_defines, language : 'c')
-  add_project_arguments(release_defines, language : 'cpp')
-  build_mode_defines += release_defines
+  add_project_arguments(release_defines + defines, language : 'c')
+  add_project_arguments(release_defines + defines, language : 'cpp')
 else
-  add_project_arguments(debug_defines, language : 'c')
-  add_project_arguments(debug_defines, language : 'cpp')
-  build_mode_defines += debug_defines
+  add_project_arguments(debug_defines + defines, language : 'c')
+  add_project_arguments(debug_defines + defines, language : 'cpp')
 endif
 
 # Main executable
@@ -77,3 +78,5 @@ exe = executable('build_master',
   include_directories : inc,
   install : is_install_executable
 )
+
+install_data('meson.build.template', install_dir : meson_build_template_install_dir)
