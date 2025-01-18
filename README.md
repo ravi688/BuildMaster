@@ -1,4 +1,7 @@
+![image](https://github.com/user-attachments/assets/e36ca337-a89b-4f49-85df-aa5976f8920a)
 # Build Master
+
+
 Build Master is a wrapper around meson to make C/C++ project configuration convenient, and faster with a minimalistic json configuration file.
 It can do the same thing in just 70 lines of json that the bare meson does in 240 lines of meson.build!
 
