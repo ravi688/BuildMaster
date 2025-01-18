@@ -138,5 +138,6 @@ The above command prints version and build mode information on stdout.
 -----------|------|--------------
 | `is_install` | bool | It must be used in the `"target"` context, by default its value is `"false"` for executable target and `"true"` for library target 
 | `description` | string | It must be used inside the root (at the same level as `"project_name"`), or inside a `"target"` context, by default its value is `"Description is not provided"` and if it is not provided for a target then its value (for the target) is inherited from the project's description.
-| `sources` | string | it is optional for targets
-| `defines`, `use_defines`, `debug_defines`, `release_defines`, `build_defines` | string | All are optional
+| `sources` | list of string(s) | it is optional for targets
+| `defines`, `use_defines`, `debug_defines`, `release_defines`, `build_defines` | list of string(s) | All are optional
+| `install_header_dirs` | list of strings(s) | It is optional if you do not intend to install any libraries
