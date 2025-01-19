@@ -81,6 +81,9 @@ The above command prints version and build mode information on stdout.
     "install_header_dirs" : [ "include/bufferlib" ],
     // Header inclusion directory common to all targets
     "include_dirs" : [ "include" ],
+    // Extra linker arguments when compiling on Windows platform
+    // It will be passed for each targets
+    "windows_link_args" : [ "-lws2 " ],
     "targets" :
     [
         {
@@ -105,7 +108,9 @@ The above command prints version and build mode information on stdout.
             "is_executable" : true,
             "defines" : [ "-DCLIENT_BUILD" ],
             // These source files are specific (in addition) to client target
-            "sources" : [ "source/main.client.c" ]
+            "sources" : [ "source/main.client.c" ],
+            // Extra linker arguments specific for this target
+            "windows_link_args" : [ "-lgdi" ]
         },
         {
             "name" : "server",
@@ -144,3 +149,5 @@ The above command prints version and build mode information on stdout.
 | `sources` | list of string(s) | it is optional for targets
 | `defines`, `use_defines`, `debug_defines`, `release_defines`, `build_defines` | list of string(s) | All are optional
 | `install_header_dirs` | list of strings(s) | It is optional if you do not intend to install any libraries
+| `windows_link_args` | list of string(s) | It is optional, but useful for specifying window specific libraries
+| `unix_link_args` | list of string(s) | It is optional, but useful for specifying pure unix os specific libraries such as Linux and FreeBSD 
