@@ -48,7 +48,7 @@ defines = [
 ]
 
 # Include directories
-inc = include_directories('include/build_master')
+inc = include_directories()
 
 # Main executable source
 sources = files('source/main.cpp')
@@ -60,12 +60,18 @@ dependencies = [ dependency('cli11'), dependency('nlohmann_json'), dependency('r
 
 # ------------------------------ INTERNALS ---------------------------------------
 
+extra_link_args = []
+os_name = host_machine.system()
+if os_name == 'windows'
+	extra_link_args += '-lws2_32'
+endif
+
 # Compiler configuration
 add_project_arguments('-m64', language : 'c')
 add_project_arguments('-m64', language : 'cpp')
 # Linker configuration
-add_project_link_arguments('-m64', '-lws2_32', language : 'c')
-add_project_link_arguments('-m64', '-lws2_32', language : 'cpp')
+add_project_link_arguments('-m64', extra_link_args, language : 'c')
+add_project_link_arguments('-m64', extra_link_args, language : 'cpp')
 
 # Build type specific defines
 if get_option('buildtype') == 'release'
