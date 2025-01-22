@@ -482,7 +482,7 @@ int main(int argc, const char* argv[])
 {
 	CLI::App app;
 
-	bool isPrintVersion, isUpdateMesonBuild, isForce;
+	bool isPrintVersion = false, isUpdateMesonBuild = false, isForce = false;
 	app.add_flag("--version", isPrintVersion, "Prints version number of Build Master");
 	app.add_flag("--update-meson-build", isUpdateMesonBuild, "Regenerates the meson.build script if the build_master.json file is more recent");
 	app.add_flag("--force", isForce, "if --update-meson-build flag is present along with this --force then meson.build script is generated even if it is upto date");
@@ -493,7 +493,7 @@ int main(int argc, const char* argv[])
 		std::string projectName;
 		std::string canonicalName;
 		std::string directory;
-		bool isForce;
+		bool isForce = false;
 		scInit->add_option("--name", projectName, "Name of the Project")->required();
 		scInit->add_option("--canonical_name", canonicalName, 
 			"Conanical name of the Project, typically used for naming files")->required();
