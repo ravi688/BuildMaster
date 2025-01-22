@@ -26,7 +26,7 @@
 using json = nlohmann::json;
 
 static constexpr std::string_view gBuildMasterJsonFilePath = "build_master.json";
-static constexpr std::string_view gMesonBuildScriptFilePath = "test.meson.build";
+static constexpr std::string_view gMesonBuildScriptFilePath = "meson.build";
 
 static bool IsRegenerateMesonBuildScript()
 {
@@ -408,10 +408,12 @@ static void RegenerateMesonBuildScript(bool isForce = false)
 }
 
 //  build_master init
-static void IntializeProject(std::string_view projectName, std::string_view canonicalName, bool isForce)
+static void IntializeProject(std::string_view projectName, std::string_view canonicalName, bool isForce, std::string_view directory)
 {
 	std::cout << std::format("Project Name = \"{}\", Canonical Name = \"{}\"", projectName, canonicalName) << "\n";
-	if(!isForce && std::filesystem::exists(gBuildMasterJsonFilePath))
+	auto buildMasterJsonFilePath = std::filesystem::path(directory) / std::filesystem::path(gBuildMasterJsonFilePath);
+	const auto& filePathStr = buildMasterJsonFilePath.native();
+	if(!isForce && std::filesystem::exists(filePathStr))
 	{
 		std::cout << "Error: build_master.json already exists, please remove it first or pass --force to overwrite it\n";
 		exit(EXIT_FAILURE);
@@ -432,7 +434,7 @@ static void IntializeProject(std::string_view projectName, std::string_view cano
 		}
 	};
 
-	std::ofstream file(gBuildMasterJsonFilePath.data(), std::ios_base::trunc);
+	std::ofstream file(filePathStr.data(), std::ios_base::trunc);
 	if(!file.is_open())
 	{
 		std::cout << "Error: Failed to create build_master.json file\n";
@@ -490,12 +492,14 @@ int main(int argc, const char* argv[])
 		CLI::App* scInit = app.add_subcommand("init", "Project initialization, creates build_master.json file");
 		std::string projectName;
 		std::string canonicalName;
+		std::string directory;
 		bool isForce;
 		scInit->add_option("--name", projectName, "Name of the Project")->required();
 		scInit->add_option("--canonical_name", canonicalName, 
 			"Conanical name of the Project, typically used for naming files")->required();
 		scInit->add_flag("--force", isForce, "Forcefully overwrites the existing build_master.json file, use it carefully");
-		scInit->callback([&]() { IntializeProject(projectName, canonicalName, isForce); });
+		scInit->add_option("--directory", directory, "Directory path in which build_master.json would be created, by default it is the current working directory");
+		scInit->callback([&]() { IntializeProject(projectName, canonicalName, isForce, directory); });
 	}
 	
 	// Meson Sub command
