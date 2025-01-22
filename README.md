@@ -34,7 +34,8 @@ $ update-ca-trust
 ```
 $ build_master init --name "BufferLib" --canonical_name "bufferlib"
 ```
-The above commanad would create a file `build_master.json` containing default project configuration and `meson.build` for meson build system
+The above commanad would create a file `build_master.json` containing default project configuration and `meson.build` for meson build system.
+You may also pass `--directory=<path to a directory>` into the above `init` command to specify where to put the `build_master.json` file.
 ```
 $ build_master --meson setup build --buildtype=release
 ```
