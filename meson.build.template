@@ -100,9 +100,9 @@ endif
 
 # pkg-config package installation
 python = find_program('python')
-
 # Try PKG_CONFIG_PATH first, typicallly it succeeds on MINGW64 (MSYS2)
 result = run_command(python, '-c', 'import os; print(os.environ["PKG_CONFIG_PATH"])', check : false)
+pkgconfig_install_path = ''
 if result.returncode() == 0
   str = result.stdout()
   # Unix
