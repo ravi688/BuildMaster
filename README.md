@@ -59,7 +59,8 @@ $ build_master --version
 The above command prints version and build mode information on stdout.
 
 ## More Info
-- If `build_master.json` already exists then running `build_master init --name "BufferLib"` would produce an error/warning, to overwrite the existing file pass '--force' flag
+- If `build_master.json` already exists then running `build_master init --name "BufferLib"` would produce an error/warning, to overwrite the existing file pass `--force` flag
+- If `source` directory already exists then running `build_master init <args>` would skip creating the directory and a `main.c` or `main.cpp` file. You'd have to remove the existing directory to automatically create `source/main.cpp` or `source/main.c`, OR you may also manually create.
 > [!WARNING]
 > If `build_master.json` is modified then running `build_master` command would regenerate the `meson.build` file overwritting the existing one 
 
