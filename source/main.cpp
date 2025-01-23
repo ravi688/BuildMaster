@@ -407,42 +407,102 @@ static void RegenerateMesonBuildScript(bool isForce = false)
 		std::cout << "Info: meson.build is upto date\n";
 }
 
-//  build_master init
-static void IntializeProject(std::string_view projectName, std::string_view canonicalName, bool isForce, std::string_view directory)
+// Stores values of the arguments passed to 'init' command
+// Example: build_master init --name=BufferLib --canonical_name=bufferlib --force
+struct ProjectInitCommandArgs
 {
-	std::cout << std::format("Project Name = \"{}\", Canonical Name = \"{}\"", projectName, canonicalName) << "\n";
-	auto buildMasterJsonFilePath = std::filesystem::path(directory) / std::filesystem::path(gBuildMasterJsonFilePath);
+	// --name=<your project name>
+	// NOTE: This can't be empty
+	std::string_view projectName;
+	// --canonical_name=<
+	// NOTE: This can't be empty
+	std::string_view canonicalName;
+	// --directory=/path/to/a/directory
+	// NOTE: This can be empty
+	std::string_view directory;
+	// --create-cpp
+	bool isCreateCpp { false };
+	// --force
+	bool isForce { false };
+};
+
+// Create a new text file and writes the text data passed as argument
+static void WriteTextFile(const std::string_view filePath, const std::string_view textData)
+{
+	std::ofstream file(filePath.data(), std::ios_base::trunc);
+	if(!file.is_open())
+	{
+		std::cout << std::format("Error: Failed to create {} file\n", filePath);
+		exit(EXIT_FAILURE);
+	}
+	file << textData << std::endl;
+	file.close();
+}
+
+//  build_master init
+static void IntializeProject(const ProjectInitCommandArgs& args)
+{
+	std::cout << std::format("Project Name = \"{}\", Canonical Name = \"{}\"", args.projectName, args.canonicalName) << "\n";
+	auto buildMasterJsonFilePath = std::filesystem::path(args.directory) / std::filesystem::path(gBuildMasterJsonFilePath);
 	const auto& filePathStr = buildMasterJsonFilePath.native();
-	if(!isForce && std::filesystem::exists(filePathStr))
+	if(!args.isForce && std::filesystem::exists(filePathStr))
 	{
 		std::cout << "Error: build_master.json already exists, please remove it first or pass --force to overwrite it\n";
 		exit(EXIT_FAILURE);
 	}
 	json buildMasterJson = 
 	{
-		{ "project_name" , projectName },
-		{ "canonical_name", canonicalName },
+		{ "project_name" , args.projectName },
+		{ "canonical_name", args.canonicalName },
 		{ "include_dirs", "include" },
 		{ "targets",
 			{			
 				{ 
-					{ "name", canonicalName },
+					{ "name", args.canonicalName },
 					{ "is_executable", true },
-					{ "sources", { "source/main.c" } }
+					{ "sources", { args.isCreateCpp ? "source/main.cpp" : "source/main.c" } }
 				}
 			}
 		}
 	};
-
-	std::ofstream file(filePathStr.data(), std::ios_base::trunc);
-	if(!file.is_open())
-	{
-		std::cout << "Error: Failed to create build_master.json file\n";
-		exit(EXIT_FAILURE);
-	}
-	file << buildMasterJson.dump(4, ' ', true) << std::endl;
-	file.close();
+	WriteTextFile(filePathStr, buildMasterJson.dump(4, ' ', true));
 	std::cout << "Success: build_master.json is generated\n";
+
+	const std::string_view mainSourceFileName { args.isCreateCpp ? "main.cpp" : "main.c" };
+	auto sourcesDirPath = std::filesystem::path(args.directory) / std::filesystem::path { "source" };
+	if(std::filesystem::exists(sourcesDirPath))
+		std::cout << std::format("Info: directory \"{}\" already exists, skipping creating \"{}\" in it\n", sourcesDirPath.native(), mainSourceFileName);
+	else
+	{
+		if(!std::filesystem::create_directory(sourcesDirPath))
+		{
+			std::cout << std::format("Error: Failed to create directory {}\n", sourcesDirPath.native());
+			exit(EXIT_FAILURE);
+		}
+
+		auto mainSourcePath = sourcesDirPath / std::filesystem::path { mainSourceFileName };
+		const std::string_view mainSourceInitData = args.isCreateCpp ?
+R"(
+#include <iostream>
+
+int main()
+{
+	std::cout << "Hello World";
+	return 0;
+}
+)" :
+R"(
+#include <stdio.h>
+
+int main()
+{
+	puts("Hello World");
+	return 0;
+}
+)";
+		WriteTextFile(mainSourcePath.native(), mainSourceInitData);
+		std::cout << std::format("Info: {} is generated\n", mainSourcePath.native());
+	}
 }
 
 static std::ostream& operator<<(std::ostream& stream, const std::vector<std::string>& v)
@@ -490,16 +550,14 @@ int main(int argc, const char* argv[])
 	// Project Initialization Sub command	
 	{
 		CLI::App* scInit = app.add_subcommand("init", "Project initialization, creates build_master.json file");
-		std::string projectName;
-		std::string canonicalName;
-		std::string directory;
-		bool isForce = false;
-		scInit->add_option("--name", projectName, "Name of the Project")->required();
-		scInit->add_option("--canonical_name", canonicalName, 
+		ProjectInitCommandArgs args;
+		scInit->add_option("--name", args.projectName, "Name of the Project")->required();
+		scInit->add_option("--canonical_name", args.canonicalName, 
 			"Conanical name of the Project, typically used for naming files")->required();
-		scInit->add_flag("--force", isForce, "Forcefully overwrites the existing build_master.json file, use it carefully");
-		scInit->add_option("--directory", directory, "Directory path in which build_master.json would be created, by default it is the current working directory");
-		scInit->callback([&]() { IntializeProject(projectName, canonicalName, isForce, directory); });
+		scInit->add_flag("--force", args.isForce, "Forcefully overwrites the existing build_master.json file, use it carefully");
+		scInit->add_flag("--create-cpp", args.isCreateCpp, "Create source/main.cpp instead of source/main.c, use this flag if you intend to write C++ code in start");
+		scInit->add_option("--directory", args.directory, "Directory path in which build_master.json would be created, by default it is the current working directory");
+		scInit->callback([&]() { IntializeProject(args); });
 	}
 	
 	// Meson Sub command
