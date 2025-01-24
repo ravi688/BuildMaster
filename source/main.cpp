@@ -603,6 +603,7 @@ static void InvokeMeson(std::string_view directory, const std::vector<std::strin
   	cArgs.push_back("meson");
   	for(const auto& arg : args)
   		cArgs.push_back(arg.data());
+  	cArgs.push_back(nullptr);
   	std::cout << "Running meson with args: " << args << "\n";
   	reproc_options opts { };
   	if(directory.size())
@@ -642,7 +643,16 @@ int main(int argc, const char* argv[])
 		scInit->add_flag("--force", args.isForce, "Forcefully overwrites the existing build_master.json file, use it carefully");
 		scInit->add_flag("--create-cpp", args.isCreateCpp, "Create source/main.cpp instead of source/main.c, use this flag if you intend to write C++ code in start");
 		scInit->add_option("--directory", args.directory, "Directory path in which build_master.json and source/main.cpp would be created, by default it is the current working directory");
-		scInit->callback([&]() { IntializeProject(args); });
+		scInit->callback([&]()
+		{
+			// If --directory option for this `init` command is not supplied while it is supplied for build_master
+			// then use the build_master's --directory option's value.
+			// We considering the following case here:
+			//	build_master --directory init --name=myProject --canonical_name=myproject
+			if(args.directory.size() == 0)
+				args.directory = directory; 
+			IntializeProject(args); 
+		});
 	}
 	
 	// Meson Sub command
