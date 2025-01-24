@@ -54,7 +54,7 @@ static std::string GetMesonBuildScriptFilePath(std::string_view directory = ".")
 // directory: value passed to --directory flag
 static bool IsRegenerateMesonBuildScript(std::string_view directory)
 {
-	if(std::filesystem::exists(GetBuildMasterJsonFilePath(directory)))
+	if(std::filesystem::exists(GetMesonBuildScriptFilePath(directory)))
 	{
 		auto mesonBuildScriptTime = std::filesystem::last_write_time(GetMesonBuildScriptFilePath(directory));
 		auto buildMasterJsonTime = std::filesystem::last_write_time(GetBuildMasterJsonFilePath(directory));
@@ -455,7 +455,7 @@ static void GenerateMesonBuildScript(std::string_view directory)
 // directory: value passed to --directory flag
 static void RegenerateMesonBuildScript(std::string_view directory = "", bool isForce = false)
 {
-	if(!std::filesystem::exists(GetBuildMasterJsonFilePath()))
+	if(!std::filesystem::exists(GetBuildMasterJsonFilePath(directory)))
 	{
 		std::cout << "Error: build_master.json doesn't exists, please execute the following:\n"
 					"build_master init --name <your project name> --canonical_name <filename friendly project name>\n";
@@ -500,6 +500,59 @@ static void WriteTextFile(const std::string_view filePath, const std::string_vie
 	file.close();
 }
 
+static void GenerateSeedFiles(const ProjectInitCommandArgs& args)
+{
+	// Generate source/main.cpp
+	const std::string_view mainSourceFileName { args.isCreateCpp ? "main.cpp" : "main.c" };
+	auto sourcesDirPath = GetPathStrRelativeToDir(args.directory, "source");
+	if(std::filesystem::exists(sourcesDirPath))
+		std::cout << std::format("Info: directory \"{}\" already exists, skipping creating \"{}\" in it\n", sourcesDirPath, mainSourceFileName);
+	else
+	{
+		if(!std::filesystem::create_directory(sourcesDirPath))
+		{
+			std::cout << std::format("Error: Failed to create directory {}\n", sourcesDirPath);
+			exit(EXIT_FAILURE);
+		}
+
+		auto mainSourcePath = GetPathStrRelativeToDir(sourcesDirPath, mainSourceFileName);
+		const std::string_view mainSourceInitData = args.isCreateCpp ?
+R"(
+#include <iostream>
+
+int main()
+{
+	std::cout << "Hello World";
+	return 0;
+}
+)" :
+R"(
+#include <stdio.h>
+
+int main()
+{
+	puts("Hello World");
+	return 0;
+}
+)";
+		WriteTextFile(mainSourcePath, mainSourceInitData);
+		std::cout << std::format("Info: {} is generated\n", mainSourcePath);
+	}
+	// Generate include directory
+	auto includeDirPath = GetPathStrRelativeToDir(args.directory, "include");
+	if(std::filesystem::exists(includeDirPath))
+		std::cout << std::format("Info: directory \"{}\" already exists, no need to create\n", includeDirPath);
+	else
+	{
+		if(!std::filesystem::create_directory(includeDirPath))
+		{
+			std::cout << std::format("Error: Failed to create directory {}\n", includeDirPath);
+			exit(EXIT_FAILURE);
+		}
+		std::cout << std::format("Info: Created directory \"{}\"\n", includeDirPath);
+	}
+}
+
 //  build_master init
 static void IntializeProject(const ProjectInitCommandArgs& args)
 {
@@ -526,43 +579,9 @@ static void IntializeProject(const ProjectInitCommandArgs& args)
 		}
 	};
 	WriteTextFile(filePathStr, buildMasterJson.dump(4, ' ', true));
-	std::cout << "Success: build_master.json is generated\n";
+	std::cout << std::format("Success: {} is generated\n", filePathStr);
 
-	const std::string_view mainSourceFileName { args.isCreateCpp ? "main.cpp" : "main.c" };
-	auto sourcesDirPath = std::filesystem::path(args.directory) / std::filesystem::path { "source" };
-	if(std::filesystem::exists(sourcesDirPath))
-		std::cout << std::format("Info: directory \"{}\" already exists, skipping creating \"{}\" in it\n", sourcesDirPath.native(), mainSourceFileName);
-	else
-	{
-		if(!std::filesystem::create_directory(sourcesDirPath))
-		{
-			std::cout << std::format("Error: Failed to create directory {}\n", sourcesDirPath.native());
-			exit(EXIT_FAILURE);
-		}
-
-		auto mainSourcePath = sourcesDirPath / std::filesystem::path { mainSourceFileName };
-		const std::string_view mainSourceInitData = args.isCreateCpp ?
-R"(
-#include <iostream>
-
-int main()
-{
-	std::cout << "Hello World";
-	return 0;
-}
-)" :
-R"(
-#include <stdio.h>
-
-int main()
-{
-	puts("Hello World");
-	return 0;
-}
-)";
-		WriteTextFile(mainSourcePath.native(), mainSourceInitData);
-		std::cout << std::format("Info: {} is generated\n", mainSourcePath.native());
-	}
+	GenerateSeedFiles(args);
 }
 
 static std::ostream& operator<<(std::ostream& stream, const std::vector<std::string>& v)
@@ -585,8 +604,11 @@ static void InvokeMeson(std::string_view directory, const std::vector<std::strin
   	for(const auto& arg : args)
   		cArgs.push_back(arg.data());
   	std::cout << "Running meson with args: " << args << "\n";
+  	reproc_options opts { };
+  	if(directory.size())
+  		opts.working_directory = directory.data();
   	// Execute the meson command with the built arguments
-  	exit(reproc_run(cArgs.data(), { }));
+  	exit(reproc_run(cArgs.data(), opts));
 }
 
 static void PrintVersionInfo() noexcept
