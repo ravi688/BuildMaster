@@ -314,27 +314,33 @@ static void ProcessTargetJson(const json& targetJson, std::ostringstream& stream
 	}
 }
 
+static void SubstitutePlaceholderJson(std::string& str, const json& jsonObj, const std::string_view placeholderName, const std::string_view jsonKey)
+{
+	SubstitutePlaceholder(str, placeholderName, [&jsonObj, &jsonKey]()
+	{
+		return GetListStringOrEmpty(jsonObj, jsonKey);
+	});
+}
+
+static constexpr std::pair<std::string_view, std::string_view> gPlaceHolderToJsonKeyMappings[] =
+{
+	{ "$$release_defines$$", "release_defines" },
+	{ "$$debug_defines$$", "debug_defines" },
+	{ "$$sources$$", "sources" },
+	{ "$$include_dirs$$", "include_dirs" },
+	{ "$$windows_link_args$$", "windows_link_args" },
+	{ "$$linux_link_args$$", "linux_link_args" },
+	{ "$$linux_link_args$$", "linux_link_args" },
+	{ "$$darwin_link_args$$", "darwin_link_args" }
+};
+
 static std::string ProcessTemplate(std::string_view templateStr, const json& buildMasterJson)
 {
 	std::string str { templateStr };
 	SubstitutePlaceholder(str, "$$project_name$$", single_quoted_str(GetJsonKeyValue<std::string>(buildMasterJson, "project_name")));
 	SubstitutePlaceholder(str, "$$canonical_name$$", single_quoted_str(GetJsonKeyValue<std::string>(buildMasterJson, "canonical_name")));
-	SubstitutePlaceholder(str, "$$release_defines$$", [&buildMasterJson]()
-	{
-		return GetListStringOrEmpty(buildMasterJson, "release_defines");
-	});
-	SubstitutePlaceholder(str, "$$debug_defines$$", [&buildMasterJson]()
-	{
-		return GetListStringOrEmpty(buildMasterJson, "debug_defines");
-	});
-	SubstitutePlaceholder(str, "$$sources$$", [&buildMasterJson]()
-	{
-		return GetListStringOrEmpty(buildMasterJson, "sources", "\n");
-	});
-	SubstitutePlaceholder(str, "$$include_dirs$$", [&buildMasterJson]()
-	{
-		return GetListStringOrEmpty(buildMasterJson, "include_dirs", "\n");
-	});
+	for(const auto& pair : gPlaceHolderToJsonKeyMappings)
+		SubstitutePlaceholderJson(str, buildMasterJson, pair.first, pair.second);
 	SubstitutePlaceholder(str, "$$dependencies$$", [&buildMasterJson]() -> std::string
 	{
 		auto it = buildMasterJson.find("dependencies");
