@@ -1,0 +1,14 @@
+{
+    "canonical_name": "bufferlib",
+    "include_dirs": "include",
+    "project_name": "BufferLib",
+    "targets": [
+        {
+            "is_executable": true,
+            "name": "bufferlib",
+            "sources": [
+                "source/main.c"
+            ]
+        }
+    ]
+}

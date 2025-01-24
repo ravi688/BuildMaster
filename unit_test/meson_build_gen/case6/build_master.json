@@ -1,0 +1,32 @@
+{
+    "canonical_name": "bufferlib",
+    "include_dirs": "include",
+    "project_name": "BufferLib",
+    "include_dirs" : [ "include/bufferlib", "include/GLFW" ],
+    "install_header_dirs" : [ "include/bufferlib" ],
+    "windows_link_args" : [ "-lws2", "-lgdi" ],
+    "linux_link_args" : [ "-pthread" ],
+    "targets": [
+        {
+            "is_executable": true,
+            "name": "bufferlib",
+            "sources": [
+                "source/main.c"
+            ]
+        },
+        {
+            "is_static_library" : true,
+            "name" : "bufferlib_static",
+            "build_defines" : [ "-DBUILD_BUFFERLIB_STATIC" ],
+            "use_defines" : [ "-DUSE_BUFFERLIB_STATIC" ]
+        },
+       {
+            "is_shared_library" : true,
+            "name" : "bufferlib_shared",
+            "build_defines" : [ "-DBUILD_BUFFERLIB_SHARED" ],
+            "use_defines" : [ "-DUSE_BUFFERLIB_SHARED" ],
+            "darwin_link_args" : [ "-pthread" ],
+            "windows_link_args" : [ "-lws2" ]
+        }
+    ]
+}

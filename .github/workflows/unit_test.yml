@@ -1,0 +1,33 @@
+name: Executable Test Workflow
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up build environment
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential
+
+    - name: Build executable
+      run: |
+        gcc -o myapp main.c  # Adjust compilation command as needed
+    
+    - name: Run executable with arguments and verify output
+      run: |
+        # Run executable with arguments
+        ./myapp arg1 arg2 > output.txt
+
+        # Compare output with expected result
+        diff output.txt expected_output.txt
+
+        # Optional: Additional verification steps
+        if [ $? -ne 0 ]; then
+          echo "Output verification failed"
+          exit 1
+        fi
