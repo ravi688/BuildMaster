@@ -155,4 +155,3 @@ The above command prints version and build mode information on stdout.
 | `windows_link_args` | list of string(s) | It is optional, but useful for specifying window specific libraries
 | `linux_link_args` | list of string(s) | It is optioanl, but useful for specifying linux specific libraries
 | `darwin_link_args` | list of string(s) | It is optional, but useful for specifying darwin (macOS) sepcific libraries
-| `unix_link_args` | list of string(s) | It is optional, but useful for specifying pure unix os specific libraries such as Linux and FreeBSD 
