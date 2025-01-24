@@ -38,11 +38,11 @@ The above commanad would create a file `build_master.json` containing default pr
 You may also pass `--directory=<path to a directory>` into the above `init` command to specify where to put the `build_master.json` file. <br>
 By default `init` command would create `main.c` file in `source` directory, if you want C++ file then pass `--create-cpp` flag.
 ```
-$ build_master --meson setup build --buildtype=release
+$ build_master meson setup build --buildtype=release
 ```
 The above command would invoke `meson setup build --buildtype=release` which will create a `build` directory and configure the project build config as release
 ```
-$ build_master --meson compile -C build
+$ build_master meson compile -C build
 ```
 The above command would compile the project
 ```
