@@ -76,6 +76,17 @@ dependencies = [
 $$dependencies$$
 ]
 
+# Linker Arguments
+windows_link_args = [ 
+$$windows_link_args$$
+]
+linux_link_args = [
+$$linux_link_args$$
+]
+darwin_link_args = [
+$$darwin_link_args$$
+]
+
 # -------------------------------------------------------------------------------
 # ------------------------------ FIXTURE ----------------------------------------
 
@@ -83,8 +94,17 @@ $$dependencies$$
 add_project_arguments('-m64', language : 'c')
 add_project_arguments('-m64', language : 'cpp')
 # Linker configuration
-add_project_link_arguments('-m64', language : 'c')
-add_project_link_arguments('-m64', language : 'cpp')
+link_args = []
+os_name = host_machine.system()
+if os_name == 'windows'
+  link_args += windows_link_args
+elif os_name == 'linux'
+  link_args += linux_link_args
+elif os_name == 'darwin'
+  link_args += darwin_link_args
+endif
+add_project_link_arguments('-m64', link_args, language : 'c')
+add_project_link_arguments('-m64', link_args, language : 'cpp')
 
 # Build type specific defines
 build_mode_defines = []

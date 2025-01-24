@@ -237,6 +237,7 @@ static void ProcessTarget(const json& targetJson, std::ostringstream& stream,
 				TargetType targetType,
 				ProjectMetaInfo& projMetaInfo,
 				std::string_view sources_suffix = "", 
+				std::string_view link_args_suffix = "",
 				std::string_view build_defines_suffix = "", 
 				std::string_view use_defines_suffix = "")
 {
@@ -261,6 +262,7 @@ static void ProcessTarget(const json& targetJson, std::ostringstream& stream,
 		stream << std::format(",\n\tc_args: {}{}", name, build_defines_suffix);
 		stream << std::format(",\n\tcpp_args: {}{}", name, build_defines_suffix);
 	}
+	stream << std::format(", \n\tlink_args: {}{}[host_machine.system()]", name, link_args_suffix);
 	stream << ",\n\tgnu_symbol_visibility: 'hidden'";
 	stream << "\n)\n";
 
@@ -284,10 +286,35 @@ static void ProcessTarget(const json& targetJson, std::ostringstream& stream,
 	}
 }
 
+static void ProcessStringListDict(const json& jsonObj, const std::vector<std::pair<std::string_view, std::string_view>>& jsonKeys, std::ostringstream& stream, const std::string_view delimit = " ")
+{
+	for(std::size_t i = 0; const auto& key : jsonKeys)
+	{
+		stream << std::format("'{}' : [{}]", key.first, GetListStringOrEmpty(jsonObj, key.second));
+		if(++i < jsonKeys.size())
+			stream << "," << delimit;
+	}
+}
+
+static void ProcessStringListDictDeclare(const json& targetJson, std::ostringstream& stream, const std::vector<std::pair<std::string_view, std::string_view>>& jsonKeys, const std::string_view suffix)
+{
+	std::string name = GetJsonKeyValue<std::string>(targetJson, "name");
+	stream << name << suffix << " = {\n";
+	ProcessStringListDict(targetJson, jsonKeys, stream, "\n");
+	stream << "\n";
+	stream << "}\n";
+}
+
 static void ProcessTargetJson(const json& targetJson, std::ostringstream& stream, ProjectMetaInfo& projMetaInfo)
 {
 	stream << "# -------------- Target: " << GetJsonKeyValue<std::string>(targetJson, "name") << " ------------------\n";
 	ProcessStringListDeclare(targetJson, stream, "sources", "_sources");
+	ProcessStringListDictDeclare(targetJson, stream, 
+		{ 
+			{ "windows", "windows_link_args" },
+			{ "linux", "linux_link_args" },
+			{ "darwin", "darwin_link_args" }
+		}, "_link_args");
 	TargetType targetType = DetectTargetType(targetJson);
 	switch(targetType)
 	{
@@ -295,46 +322,52 @@ static void ProcessTargetJson(const json& targetJson, std::ostringstream& stream
 		{
 			ProcessStringListDeclare(targetJson, stream, "build_defines", "_build_defines");
 			ProcessStringListDeclare(targetJson, stream, "use_defines", "_use_defines");
-			ProcessTarget(targetJson, stream, TargetType::StaticLibrary, projMetaInfo, "_sources", "_build_defines", "_use_defines");
+			ProcessTarget(targetJson, stream, TargetType::StaticLibrary, projMetaInfo, "_sources", "_link_args", "_build_defines", "_use_defines");
 			break;
 		}
 		case TargetType::SharedLibrary:
 		{
 			ProcessStringListDeclare(targetJson, stream, "build_defines", "_build_defines");
 			ProcessStringListDeclare(targetJson, stream, "use_defines", "_use_defines");
-			ProcessTarget(targetJson, stream, TargetType::SharedLibrary, projMetaInfo, "_sources", "_build_defines", "_use_defines");
+			ProcessTarget(targetJson, stream, TargetType::SharedLibrary, projMetaInfo, "_sources", "_link_args", "_build_defines", "_use_defines");
 			break;
 		}
 		case TargetType::Executable:
 		{
 			ProcessStringListDeclare(targetJson, stream, "defines", "_defines");
-			ProcessTarget(targetJson, stream, TargetType::Executable, projMetaInfo, "_sources", "_defines");
+			ProcessTarget(targetJson, stream, TargetType::Executable, projMetaInfo, "_sources", "_link_args", "_defines");
 			break;
 		}
 	}
 }
+
+static void SubstitutePlaceholderJson(std::string& str, const json& jsonObj, const std::string_view placeholderName, const std::string_view jsonKey)
+{
+	SubstitutePlaceholder(str, placeholderName, [&jsonObj, &jsonKey]()
+	{
+		return GetListStringOrEmpty(jsonObj, jsonKey);
+	});
+}
+
+static constexpr std::pair<std::string_view, std::string_view> gPlaceHolderToJsonKeyMappings[] =
+{
+	{ "$$release_defines$$", "release_defines" },
+	{ "$$debug_defines$$", "debug_defines" },
+	{ "$$sources$$", "sources" },
+	{ "$$include_dirs$$", "include_dirs" },
+	{ "$$windows_link_args$$", "windows_link_args" },
+	{ "$$linux_link_args$$", "linux_link_args" },
+	{ "$$linux_link_args$$", "linux_link_args" },
+	{ "$$darwin_link_args$$", "darwin_link_args" }
+};
 
 static std::string ProcessTemplate(std::string_view templateStr, const json& buildMasterJson)
 {
 	std::string str { templateStr };
 	SubstitutePlaceholder(str, "$$project_name$$", single_quoted_str(GetJsonKeyValue<std::string>(buildMasterJson, "project_name")));
 	SubstitutePlaceholder(str, "$$canonical_name$$", single_quoted_str(GetJsonKeyValue<std::string>(buildMasterJson, "canonical_name")));
-	SubstitutePlaceholder(str, "$$release_defines$$", [&buildMasterJson]()
-	{
-		return GetListStringOrEmpty(buildMasterJson, "release_defines");
-	});
-	SubstitutePlaceholder(str, "$$debug_defines$$", [&buildMasterJson]()
-	{
-		return GetListStringOrEmpty(buildMasterJson, "debug_defines");
-	});
-	SubstitutePlaceholder(str, "$$sources$$", [&buildMasterJson]()
-	{
-		return GetListStringOrEmpty(buildMasterJson, "sources", "\n");
-	});
-	SubstitutePlaceholder(str, "$$include_dirs$$", [&buildMasterJson]()
-	{
-		return GetListStringOrEmpty(buildMasterJson, "include_dirs", "\n");
-	});
+	for(const auto& pair : gPlaceHolderToJsonKeyMappings)
+		SubstitutePlaceholderJson(str, buildMasterJson, pair.first, pair.second);
 	SubstitutePlaceholder(str, "$$dependencies$$", [&buildMasterJson]() -> std::string
 	{
 		auto it = buildMasterJson.find("dependencies");
