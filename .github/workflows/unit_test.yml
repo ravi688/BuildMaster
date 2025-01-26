@@ -1,4 +1,4 @@
-name: Executable Test Workflow
+name: Build Master Automated Unit Tests
 
 on: [push, pull_request]
 
@@ -13,21 +13,16 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y build-essential
+        sudo apt-get install -y meson cmake
+        sudo apt-get install python3
+        sudo apt-get install python-is-python3
 
     - name: Build executable
       run: |
-        gcc -o myapp main.c  # Adjust compilation command as needed
+        meson setup build
+        meson compile -C build
+        meson install -C build
     
-    - name: Run executable with arguments and verify output
+    - name: Run Unit Tests
       run: |
-        # Run executable with arguments
-        ./myapp arg1 arg2 > output.txt
-
-        # Compare output with expected result
-        diff output.txt expected_output.txt
-
-        # Optional: Additional verification steps
-        if [ $? -ne 0 ]; then
-          echo "Output verification failed"
-          exit 1
-        fi
+        python ./unit_test/unit_test.py
