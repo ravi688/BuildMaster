@@ -19,9 +19,9 @@ jobs:
 
     - name: Build executable
       run: |
-        meson setup build
-        meson compile -C build
-        meson install -C build
+        sudo meson setup build
+        sudo meson compile -C build
+        sudo meson install -C build
     
     - name: Run Unit Tests
       run: |
