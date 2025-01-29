@@ -41,6 +41,19 @@ class TestVersion(TestBase):
         self.assertIsNone(output.stderr)
         return
 
+    # Geneates meson.build file and Runs meson into the initialized directory to check if the meson.build file is a valid build script
+    def check_meson_build_script(self, directory = None):
+        directory_arg = [f'--directory={directory}'] if directory else []
+        output = self.run_with_args(['--update-meson-build'] + directory_arg)
+        self.assertEqual(output.returncode, 0)
+        self.assertIsNone(output.stderr)
+        output.assert_exists_file(os.path.join(directory if directory else '', 'meson.build'))
+
+        output = self.run_with_args(directory_arg + ['meson', 'setup', 'build'])
+        self.assertEqual(output.returncode, 0)
+        self.assertIsNone(output.stderr)
+        return
+
     def run_test_init(self, is_cpp = False):
         output = self.run_with_args(['init', '--name=MyProject', '--canonical_name=myproject'] + (['--create-cpp'] if is_cpp else []))
         self.assertEqual(output.returncode, 0)
@@ -50,6 +63,9 @@ class TestVersion(TestBase):
         output.assert_exists_dir('source')
         output.assert_exists_dir('include')
         output.assert_exists_file('source/main.cpp' if is_cpp else 'source/main.c')
+
+        self.check_meson_build_script()
+
         self.cleanupArtifacts()
         return
 
@@ -72,6 +88,7 @@ class TestVersion(TestBase):
             output.assert_exists_dir(os.path.join(temp_dir, 'source'))
             output.assert_exists_dir(os.path.join(temp_dir, 'include'))
             output.assert_exists_file(os.path.join(temp_dir, 'source/main.cpp' if is_cpp else 'source/main.c'))
+            self.check_meson_build_script(temp_dir)
             self.cleanupArtifacts()
         return
 
