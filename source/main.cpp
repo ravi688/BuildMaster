@@ -414,7 +414,7 @@ static std::string ProcessTemplate(std::string_view templateStr, const json& bui
 			return "";
 		std::string str;
 		for(const auto& value : it.value())
-			str.append(std::format("install_subdir('{}')\n", value.template get<std::string>()));
+			str.append(std::format("install_subdir('{}', install_dir : get_option('includedir'))\n", value.template get<std::string>()));
 		return str;
 	});
 	SubstitutePlaceholder(str, "$$build_targets$$", [&buildMasterJson]() -> std::string
