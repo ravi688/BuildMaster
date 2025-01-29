@@ -38,11 +38,11 @@ The above commanad would create a file `build_master.json` containing default pr
 You may also pass `--directory=<path to a directory>` into the above `init` command to specify where to put the `build_master.json` file. <br>
 By default `init` command would create `main.c` file in `source` directory, if you want C++ file then pass `--create-cpp` flag.
 ```
-$ build_master --meson setup build --buildtype=release
+$ build_master meson setup build --buildtype=release
 ```
 The above command would invoke `meson setup build --buildtype=release` which will create a `build` directory and configure the project build config as release
 ```
-$ build_master --meson compile -C build
+$ build_master meson compile -C build
 ```
 The above command would compile the project
 ```
@@ -155,3 +155,6 @@ The above command prints version and build mode information on stdout.
 | `windows_link_args` | list of string(s) | It is optional, but useful for specifying window specific libraries
 | `linux_link_args` | list of string(s) | It is optioanl, but useful for specifying linux specific libraries
 | `darwin_link_args` | list of string(s) | It is optional, but useful for specifying darwin (macOS) sepcific libraries
+
+### Have you got benefited with my work?
+<a href="https://www.buymeacoffee.com/raviprakashsingh" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>
