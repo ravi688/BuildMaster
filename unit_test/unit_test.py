@@ -39,7 +39,6 @@ class TestVersion(TestBase):
         self.assert_string_matches_regex(output.stdout[0], r'^Build Master \d+\.\d+\.\d+$')
         self.assert_string_matches_regex(output.stdout[1], r'^Build Type: (Debug|Release)$')
         self.assertIsNone(output.stderr)
-        output.cleanup()
         return
 
     def run_test_init(self, is_cpp = False):
@@ -51,7 +50,7 @@ class TestVersion(TestBase):
         output.assert_exists_dir('source')
         output.assert_exists_dir('include')
         output.assert_exists_file('source/main.cpp' if is_cpp else 'source/main.c')
-        output.cleanup()
+        self.cleanupArtifacts()
         return
 
     # build_master init --name=MyProject --canonical_name=myproject
@@ -73,7 +72,7 @@ class TestVersion(TestBase):
             output.assert_exists_dir(os.path.join(temp_dir, 'source'))
             output.assert_exists_dir(os.path.join(temp_dir, 'include'))
             output.assert_exists_file(os.path.join(temp_dir, 'source/main.cpp' if is_cpp else 'source/main.c'))
-            output.cleanup()
+            self.cleanupArtifacts()
         return
 
     # build_master init --name=MyProject --canonical_name=myproject --directory=<some temp dir>
