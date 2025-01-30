@@ -18,6 +18,8 @@ jobs:
         run: |
           ./ci-mingw64-setup.sh
       - name: Build executable
+        run: |
           ./ci-build.sh
       - name: Run unit tests
+        run: |
           ./ci-unit-test.sh
