@@ -34,7 +34,7 @@ static constexpr std::string_view gMesonBuildScriptFilePath = "meson.build";
 static std::string GetPathStrRelativeToDir(std::string_view directoryBase, std::string_view relativePath)
 {
 	auto buildMasterJsonFilePath = std::filesystem::path(directoryBase) / std::filesystem::path(relativePath);
-	return buildMasterJsonFilePath.native();
+	return buildMasterJsonFilePath.string();
 }
 
 // Use this function whenever you meant to get gBuildMasterJsonFilePath.
