@@ -37,28 +37,34 @@ $ update-ca-trust
 ```
 
 ## Usage
+### Initialing a project
 ```
 $ build_master init --name "BufferLib" --canonical_name "bufferlib"
 ```
 The above commanad would create a file `build_master.json` containing default project configuration and `meson.build` for meson build system.
 You may also pass `--directory=<path to a directory>` into the above `init` command to specify where to put the `build_master.json` file. <br>
 By default `init` command would create `main.c` file in `source` directory, if you want C++ file then pass `--create-cpp` flag.
+### Configuring the project
 ```
 $ build_master meson setup build --buildtype=release
 ```
 The above command would invoke `meson setup build --buildtype=release` which will create a `build` directory and configure the project build config as release
+### Compiling the project
 ```
 $ build_master meson compile -C build
 ```
 The above command would compile the project
+### Regenerating the meson.build if build_master.json changes
 ```
 $ build_master --update-meson-build
 ```
-The above command checks if the current `meson.build` file is out of date and then regenerates overwriting the existing one.
+The above command checks if the current `meson.build` file is out of date and then regenerates overwriting the existing one. <br>
+OR
 ```
 $ build_master --update-meson-build --force
 ```
 The above command does forcibly regenerates the existing `meson.build` even if it is upto date with `build_master.json`.
+### Displaying version of the build_master
 ```
 $ build_master --version
 ```
