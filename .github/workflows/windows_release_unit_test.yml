@@ -16,7 +16,7 @@ jobs:
           install: git mingw-w64-x86_64-gcc
       - name: Build environment setup
         run: |
-          ./ci-mingw64-setup.sh
+          ./ci-mingw-setup.sh
       - name: Build executable
         run: |
           ./ci-build.sh
