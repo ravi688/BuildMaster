@@ -1,5 +1,7 @@
 [![Release Mode Unit Tests](https://github.com/ravi688/BuildMaster/actions/workflows/release_unit_test.yml/badge.svg)](https://github.com/ravi688/BuildMaster/actions/workflows/release_unit_test.yml)
 [![Debug Mode Unit Tests](https://github.com/ravi688/BuildMaster/actions/workflows/debug_unit_test.yml/badge.svg)](https://github.com/ravi688/BuildMaster/actions/workflows/debug_unit_test.yml)
+[![Windows Debug Mode Unit Test](https://github.com/ravi688/BuildMaster/actions/workflows/windows_debug_unit_test.yml/badge.svg)](https://github.com/ravi688/BuildMaster/actions/workflows/windows_debug_unit_test.yml)
+[![Windows Release Mode Unit Test](https://github.com/ravi688/BuildMaster/actions/workflows/windows_release_unit_test.yml/badge.svg)](https://github.com/ravi688/BuildMaster/actions/workflows/windows_release_unit_test.yml)
 
 ![image](https://github.com/user-attachments/assets/e36ca337-a89b-4f49-85df-aa5976f8920a)
 # Build Master
