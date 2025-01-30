@@ -1,14 +1,14 @@
-name: Build Master Automated Unit Tests
+name: Release Mode Unit Tests
 
 on: [push, pull_request]
 
 jobs:
-  test:
+ release-build-test:
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
-    
+
     - name: Set up build environment
       run: |
         sudo apt-get update
@@ -19,10 +19,10 @@ jobs:
 
     - name: Build executable
       run: |
-        sudo meson setup build
+        sudo meson setup build --buildtype=release
         sudo meson compile -C build
         sudo meson install -C build
-    
+
     - name: Run Unit Tests
       run: |
         python ./unit_test/unit_test.py
