@@ -37,7 +37,7 @@ $ update-ca-trust
 ```
 
 ## Usage
-### Initialing a project
+### Initializing a project
 ```
 $ build_master init --name "BufferLib" --canonical_name "bufferlib"
 ```
