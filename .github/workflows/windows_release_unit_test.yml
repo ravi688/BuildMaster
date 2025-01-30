@@ -1,0 +1,23 @@
+name: Windows Release Mode Unit Test
+on: [push, pull_request]
+
+jobs:
+  mingw64-release-test:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: git mingw-w64-x86_64-gcc
+      - name: Build environment setup
+        run: |
+          ./ci-mingw64-setup.sh
+      - name: Build executable
+          ./ci-build.sh
+      - name: Run unit tests
+          ./ci-unit-test.sh
