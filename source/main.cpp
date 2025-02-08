@@ -293,14 +293,14 @@ static void ProcessTarget(const json& targetJson, std::ostringstream& stream,
 
 	if(targetType != TargetType::Executable)
 	{
-		stream << std::format("{} = declare_dependency(\n", name);
+		stream << std::format("{}_dep = declare_dependency(\n", name);
 		stream << "\tlink_with: " << name << ",\n";
 		stream << "\tinclude_directories: inc,\n";
 		stream << std::format("\tcompile_args: {}{} + build_mode_defines\n", name, use_defines_suffix);
 		stream << ")\n";
 		if(isInstall)
 		{
-			stream << "pkgmod.generate(" << single_quoted_str(name) << ",\n";
+			stream << "pkgmod.generate(" << name << ",\n";
 			stream << "\tname: " << single_quoted_str(GetJsonKeyValue<std::string>(targetJson, "friendly_name", projMetaInfo.name)) << ",\n";
 			stream << "\tdescription: " << single_quoted_str(GetJsonKeyValue<std::string>(targetJson, "description", projMetaInfo.description)) << ",\n";
 			stream << "\tfilebase: " << single_quoted_str(name) << ",\n";
