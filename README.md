@@ -145,6 +145,7 @@ The above command prints version and build mode information on stdout.
         {
             "name" : "main_test",
             "is_executable" : true,
+            "dependencies" : [ "catch2-with-main" ],
             "is_install" : false,
             "sources" : [ "source/main_test.c" ]
         }
@@ -168,6 +169,7 @@ The above command prints version and build mode information on stdout.
 | `windows_link_args` | list of string(s) | It is optional, but useful for specifying window specific libraries
 | `linux_link_args` | list of string(s) | It is optioanl, but useful for specifying linux specific libraries
 | `darwin_link_args` | list of string(s) | It is optional, but useful for specifying darwin (macOS) sepcific libraries
+| `dependencies` | list of string(s) | It is optional, it can be used in project scope or in target context both, if used in target context then the specified dependencies will only be applicable to that target only
 
 ### Have you got benefited with my work?
 <a href="https://www.buymeacoffee.com/raviprakashsingh" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>
