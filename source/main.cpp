@@ -199,22 +199,27 @@ static TargetType DetectTargetType(const json& targetJson)
 	return TargetType::Executable;
 }
 
-static void ProcessStringList(const json& jsonObj, std::ostringstream& stream, std::string_view delimit = " ")
+using TokenTransformCallback = std::function<std::string(std::string_view)>;
+
+static void ProcessStringList(const json& jsonObj, std::ostringstream& stream, std::string_view delimit = " ", std::optional<TokenTransformCallback> callback = { })
 {
 	for(std::size_t i = 0; const auto& value : jsonObj)
 	{
-		stream << std::format("'{}'", value.template get<std::string>());
+		std::string token = std::format("'{}'", value.template get<std::string>());
+		if(callback)
+			token = (*callback)(token);
+		stream << token;
 		if(++i < jsonObj.size())
 			stream << "," << delimit;
 	}
 }
 
-static void ProcessStringList(const json& jsonObj, std::string_view keyName, std::ostringstream& stream, std::string_view delimit = " ")
+static void ProcessStringList(const json& jsonObj, std::string_view keyName, std::ostringstream& stream, std::string_view delimit = " ", std::optional<TokenTransformCallback> callback = { })
 {
 	auto it = jsonObj.find(keyName);
 	if(it == jsonObj.end())
 		return;
-	ProcessStringList(it.value(), stream, delimit);
+	ProcessStringList(it.value(), stream, delimit, callback);
 }
 
 template<typename T>
@@ -227,11 +232,11 @@ static T GetJsonKeyValue(const json& jsonObj, std::string_view key, std::optiona
 	return std::move(defaultValue.value());
 }
 
-static void ProcessStringListDeclare(const json& targetJson, std::ostringstream& stream, std::string_view listName, std::string_view suffix)
+static void ProcessStringListDeclare(const json& targetJson, std::ostringstream& stream, std::string_view listName, std::string_view suffix, std::optional<TokenTransformCallback> callback = { })
 {
 	std::string name = GetJsonKeyValue<std::string>(targetJson, "name");
 	stream << name << suffix << " = [\n";
-	ProcessStringList(targetJson, listName, stream, "\n");
+	ProcessStringList(targetJson, listName, stream, "\n", callback);
 	stream << "\n";
 	stream << "]\n";
 }
@@ -261,7 +266,8 @@ static std::string single_quoted_str(std::string_view str)
 static void ProcessTarget(const json& targetJson, std::ostringstream& stream,
 				TargetType targetType,
 				ProjectMetaInfo& projMetaInfo,
-				std::string_view sources_suffix = "", 
+				std::string_view sources_suffix = "",
+				std::string_view dependencies_suffix = "",
 				std::string_view link_args_suffix = "",
 				std::string_view build_defines_suffix = "", 
 				std::string_view use_defines_suffix = "")
@@ -273,7 +279,7 @@ static void ProcessTarget(const json& targetJson, std::ostringstream& stream,
 	std::string_view targetTypeStr = GetTargetTypeStr(targetType);
 	stream << std::format("{} = {}('{}'", name, targetTypeStr, name);
 	stream << std::format(",\n\t{}{} + sources", name, sources_suffix);
-	stream << std::format(",\n\tdependencies: dependencies");
+	stream << std::format(",\n\tdependencies: dependencies + {}{}", name, dependencies_suffix);
 	stream << std::format(",\n\tinclude_directories: inc");
 	stream << std::format(",\n\tinstall: {}", isInstall ? "true" : "false");
 	if(targetType != TargetType::Executable)
@@ -334,6 +340,10 @@ static void ProcessTargetJson(const json& targetJson, std::ostringstream& stream
 {
 	stream << "# -------------- Target: " << GetJsonKeyValue<std::string>(targetJson, "name") << " ------------------\n";
 	ProcessStringListDeclare(targetJson, stream, "sources", "_sources");
+	ProcessStringListDeclare(targetJson, stream, "dependencies", "_dependencies", [](std::string_view quotedToken) -> std::string
+	{
+		return std::format("dependency({})", quotedToken);
+	});
 	ProcessStringListDictDeclare(targetJson, stream, 
 		{ 
 			{ "windows", "windows_link_args" },
@@ -347,20 +357,20 @@ static void ProcessTargetJson(const json& targetJson, std::ostringstream& stream
 		{
 			ProcessStringListDeclare(targetJson, stream, "build_defines", "_build_defines");
 			ProcessStringListDeclare(targetJson, stream, "use_defines", "_use_defines");
-			ProcessTarget(targetJson, stream, TargetType::StaticLibrary, projMetaInfo, "_sources", "_link_args", "_build_defines", "_use_defines");
+			ProcessTarget(targetJson, stream, TargetType::StaticLibrary, projMetaInfo, "_sources", "_dependencies",  "_link_args", "_build_defines", "_use_defines");
 			break;
 		}
 		case TargetType::SharedLibrary:
 		{
 			ProcessStringListDeclare(targetJson, stream, "build_defines", "_build_defines");
 			ProcessStringListDeclare(targetJson, stream, "use_defines", "_use_defines");
-			ProcessTarget(targetJson, stream, TargetType::SharedLibrary, projMetaInfo, "_sources", "_link_args", "_build_defines", "_use_defines");
+			ProcessTarget(targetJson, stream, TargetType::SharedLibrary, projMetaInfo, "_sources", "_dependencies", "_link_args", "_build_defines", "_use_defines");
 			break;
 		}
 		case TargetType::Executable:
 		{
 			ProcessStringListDeclare(targetJson, stream, "defines", "_defines");
-			ProcessTarget(targetJson, stream, TargetType::Executable, projMetaInfo, "_sources", "_link_args", "_defines");
+			ProcessTarget(targetJson, stream, TargetType::Executable, projMetaInfo, "_sources", "_dependencies", "_link_args", "_defines");
 			break;
 		}
 	}
