@@ -1,7 +1,9 @@
 # Build Master
 ![image](https://github.com/user-attachments/assets/e36ca337-a89b-4f49-85df-aa5976f8920a)
 [![Latest Release](https://img.shields.io/github/v/release/ravi688/BuildMaster?label=latest&logo=github)](https://github.com/ravi688/BuildMaster/releases/latest)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT) <br>
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+![GitHub stars](https://img.shields.io/github/stars/ravi688/BuildMaster?style=social)
+<br>
 [![Linux Release Mode Unit Tests](https://github.com/ravi688/BuildMaster/actions/workflows/release_unit_test.yml/badge.svg)](https://github.com/ravi688/BuildMaster/actions/workflows/release_unit_test.yml)
 [![Linux Debug Mode Unit Tests](https://github.com/ravi688/BuildMaster/actions/workflows/debug_unit_test.yml/badge.svg)](https://github.com/ravi688/BuildMaster/actions/workflows/debug_unit_test.yml) <br>
 [![Windows Debug Mode Unit Test](https://github.com/ravi688/BuildMaster/actions/workflows/windows_debug_unit_test.yml/badge.svg)](https://github.com/ravi688/BuildMaster/actions/workflows/windows_debug_unit_test.yml)
