@@ -1,11 +1,12 @@
 # Build Master
 ![image](https://github.com/user-attachments/assets/e36ca337-a89b-4f49-85df-aa5976f8920a)
-
+![Latest Release](https://img.shields.io/github/v/release/ravi688/BuildMaster?label=latest&logo=github)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT) <br>
 [![Linux Release Mode Unit Tests](https://github.com/ravi688/BuildMaster/actions/workflows/release_unit_test.yml/badge.svg)](https://github.com/ravi688/BuildMaster/actions/workflows/release_unit_test.yml)
 [![Linux Debug Mode Unit Tests](https://github.com/ravi688/BuildMaster/actions/workflows/debug_unit_test.yml/badge.svg)](https://github.com/ravi688/BuildMaster/actions/workflows/debug_unit_test.yml) <br>
 [![Windows Debug Mode Unit Test](https://github.com/ravi688/BuildMaster/actions/workflows/windows_debug_unit_test.yml/badge.svg)](https://github.com/ravi688/BuildMaster/actions/workflows/windows_debug_unit_test.yml)
 [![Windows Release Mode Unit Test](https://github.com/ravi688/BuildMaster/actions/workflows/windows_release_unit_test.yml/badge.svg)](https://github.com/ravi688/BuildMaster/actions/workflows/windows_release_unit_test.yml)
+
 
 ## Objective
 Build Master is a wrapper around meson to make C/C++ project configuration convenient, and faster with a minimalistic json configuration file.
