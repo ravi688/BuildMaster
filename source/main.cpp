@@ -330,8 +330,8 @@ static void ProcessTarget(const json& targetJson,
 		if(targetType != TargetType::Executable)
 		{
 			stream << ",\n\tinstall_dir: lib_install_dir";
-			stream << std::format(",\n\tc_args: {}{} + {}{}", name, suffixData.buildDefines, name, suffixData.useDefines);
-			stream << std::format(",\n\tcpp_args: {}{} + {}{}", name, suffixData.buildDefines, name, suffixData.useDefines);
+			stream << std::format(",\n\tc_args: {}{}", name, suffixData.buildDefines);
+			stream << std::format(",\n\tcpp_args: {}{}", name, suffixData.buildDefines);
 		}
 		else
 		{
