@@ -23,7 +23,8 @@
 #define BUILDMASTER_VERSION_STRINGIZE(major, minor, micro) BUILDMASTER_VERSION_XSTRINGIZE(major, minor, micro)
 #define BUILDMASTER_VERSION_STRING BUILDMASTER_VERSION_STRINGIZE(BUILDMASTER_VERSION_MAJOR, BUILDMASTER_VERSION_MINOR, BUILDMASTER_VERSION_MICRO)
 
-using json = nlohmann::json;
+using json = nlohmann::ordered_json; 
+// using json = nlohmann::json;
 
 static constexpr std::string_view gBuildMasterJsonFilePath = "build_master.json";
 static constexpr std::string_view gMesonBuildScriptFilePath = "meson.build";
@@ -138,27 +139,69 @@ static std::string LoadMesonBuildScriptTemplate()
 	return LoadTextFile(str);
 }
 
-static std::string BuildListString(const json& jsonStringList, std::string_view delimit = " ")
+using TokenTransformCallback = std::function<std::string(std::string_view)>;
+
+static std::string single_quoted_str(std::string_view str)
 {
-	std::string str;
-	for(std::size_t i = 0; const auto& value : jsonStringList)
+	return std::format("'{}'", str);
+}
+
+// Examples: 
+// link_dir: $cuda_lib_path -> '-L' + cuda_lib_path
+// link_dir: 'my/path/to/lib' -> '-L' + 'my/path/to/lib'
+// link_dir: $cuda_lib_path + '/windows_lib_path/' -> '-L' + cuda_lib_path + '/windows/lib_path/'
+// link_dir: $vulkan_sdk_path + $relative_lib_path -> '-L' + vulkan_sdk_path + relative_lib_path
+// $vulkan_sdk_path -> vulkan_sdk_path
+// my/path/to/vulkan/sdk -> 'my/path/to/vulkan/sdk'
+static std::string ApplyMetaInfo(std::string_view str)
+{
+	std::string copyStr { str };
+	std::size_t index = 0;
+	bool isDollarSignFound = false;
+	while(true)
 	{
-		str.append(std::format("'{}'", value.template get<std::string>()));
-		if(++i < jsonStringList.size())
-		{
-			str.append(",");
-			str.append(delimit);
-		}
+		index = copyStr.find_first_of("$", index);
+		if(index == std::string::npos)
+			break;
+		copyStr.erase(index, 1);
+		isDollarSignFound = true;
 	}
-	return str;
+	const std::string_view linkDirStr = "link_dir:";
+	if(copyStr.find(linkDirStr) != std::string::npos)
+		copyStr.replace(0, linkDirStr.length(), "'-L' + ");
+	// If neither `link_dir: ` is found, nor $ is found, then we just wrap the str in single quotes
+	else if(!isDollarSignFound)
+		return single_quoted_str(str);
+	return copyStr;
+}
+
+static void ProcessStringListElements(const json& jsonObj, std::ostringstream& stream, std::string_view delimit = " ", std::optional<TokenTransformCallback> callback = { })
+{
+	for(std::size_t i = 0; const auto& value : jsonObj)
+	{
+		const auto& str = value.template get<std::string>();
+		std::string token = ApplyMetaInfo(str);
+		if(callback)
+			token = (*callback)(token);
+		stream << token;
+		if(++i < jsonObj.size())
+			stream << "," << delimit;
+	}
+}
+
+static void ProcessStringListElements(const json& jsonObj, std::string_view keyName, std::ostringstream& stream, std::string_view delimit = " ", std::optional<TokenTransformCallback> callback = { })
+{
+	auto it = jsonObj.find(keyName);
+	if(it == jsonObj.end())
+		return;
+	ProcessStringListElements(it.value(), stream, delimit, callback);
 }
 
 static std::string GetListStringOrEmpty(const json& jsonObj, std::string_view keyName, std::string_view delimit = " ")
 {
-	auto it = jsonObj.find(keyName);
-	if(it == jsonObj.end())
-		return "";
-	return BuildListString(it.value(), delimit);
+	std::ostringstream stream;
+	ProcessStringListElements(jsonObj, keyName, stream, delimit);
+	return stream.str();
 }
 
 static void SubstitutePlaceholder(std::string& str, std::string_view placeholderName, std::string_view substitute)
@@ -203,29 +246,6 @@ static TargetType DetectTargetType(const json& targetJson)
 	return TargetType::Executable;
 }
 
-using TokenTransformCallback = std::function<std::string(std::string_view)>;
-
-static void ProcessStringList(const json& jsonObj, std::ostringstream& stream, std::string_view delimit = " ", std::optional<TokenTransformCallback> callback = { })
-{
-	for(std::size_t i = 0; const auto& value : jsonObj)
-	{
-		std::string token = std::format("'{}'", value.template get<std::string>());
-		if(callback)
-			token = (*callback)(token);
-		stream << token;
-		if(++i < jsonObj.size())
-			stream << "," << delimit;
-	}
-}
-
-static void ProcessStringList(const json& jsonObj, std::string_view keyName, std::ostringstream& stream, std::string_view delimit = " ", std::optional<TokenTransformCallback> callback = { })
-{
-	auto it = jsonObj.find(keyName);
-	if(it == jsonObj.end())
-		return;
-	ProcessStringList(it.value(), stream, delimit, callback);
-}
-
 template<typename T>
 static T GetJsonKeyValue(const json& jsonObj, std::string_view key, std::optional<T> defaultValue = {})
 {
@@ -236,13 +256,27 @@ static T GetJsonKeyValue(const json& jsonObj, std::string_view key, std::optiona
 	return std::move(defaultValue.value());
 }
 
+static void ProcessStringList(const json& jsonObj, std::ostringstream& stream, std::string_view delimit = " ", std::optional<TokenTransformCallback> callback = { })
+{
+	stream << "[\n";
+	ProcessStringListElements(jsonObj, stream, delimit, callback);
+	stream << "\n";
+	stream << "]\n";
+}
+
+static void ProcessStringList(const json& jsonObj, std::string_view keyName, std::ostringstream& stream, std::string_view delimit = " ", std::optional<TokenTransformCallback> callback = { })
+{
+	stream << "[\n";
+	ProcessStringListElements(jsonObj, keyName, stream, delimit, callback);
+	stream << "\n";
+	stream << "]\n";
+}
+
 static void ProcessStringListDeclare(const json& targetJson, std::ostringstream& stream, std::string_view listName, std::string_view suffix, std::optional<TokenTransformCallback> callback = { })
 {
 	std::string name = GetJsonKeyValue<std::string>(targetJson, "name");
-	stream << name << suffix << " = [\n";
+	stream << name << suffix << " = ";
 	ProcessStringList(targetJson, listName, stream, "\n", callback);
-	stream << "\n";
-	stream << "]\n";
 }
 
 static constexpr std::string_view GetTargetTypeStr(TargetType targetType)
@@ -262,11 +296,6 @@ struct ProjectMetaInfo
 	std::string name;
 	std::string description;
 };
-
-static std::string single_quoted_str(std::string_view str)
-{
-	return std::format("'{}'", str);
-}
 
 static void ProcessTarget(const json& targetJson, std::ostringstream& stream,
 				TargetType targetType,
@@ -325,9 +354,7 @@ static void ProcessTarget(const json& targetJson, std::ostringstream& stream,
 			if(targetType == TargetType::HeaderOnlyLibrary)
 			{
 				stream << "\tsubdirs: ";
-				stream << "[ ";
 				ProcessStringList(targetJson, "subdirs", stream);
-				stream << " ],\n";
 			}
 			stream << std::format("\textra_cflags: {}{} + build_mode_defines\n", name, use_defines_suffix);
 			stream << ")\n";
@@ -410,6 +437,27 @@ static std::string ProcessTemplate(std::string_view templateStr, const json& bui
 	SubstitutePlaceholder(str, "$$canonical_name$$", single_quoted_str(GetJsonKeyValue<std::string>(buildMasterJson, "canonical_name")));
 	for(const auto& pair : gPlaceHolderToJsonKeyMappings)
 		SubstitutePlaceholderJson(str, buildMasterJson, pair.first, pair.second);
+	SubstitutePlaceholder(str, "$$vars$$", [&buildMasterJson]() -> std::string
+	{
+		auto it = buildMasterJson.find("vars");
+		if(it == buildMasterJson.end())
+			return "";
+		std::string str;
+		 for (const auto& [key, value] : it->items())
+		 {
+			if(value.is_array())
+			{
+			    std::ostringstream stream;
+			    stream << key << " = ";
+			    ProcessStringList(value, stream, "\n");
+			    str.append(stream.str());
+			}
+			else
+				str.append(std::format("{} = {}\n", key, value.template get<std::string>()));
+		}
+		return str;
+	});
+	// TODO: Use ProcessStringListDeclare() instead
 	SubstitutePlaceholder(str, "$$dependencies$$", [&buildMasterJson]() -> std::string
 	{
 		auto it = buildMasterJson.find("dependencies");

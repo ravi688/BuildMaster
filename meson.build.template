@@ -48,6 +48,9 @@ project($$project_name$$, 'c', 'cpp',
   ]
 )
 
+# Variables
+$$vars$$
+
 # Release Build Defines
 release_defines = [
 $$release_defines$$
