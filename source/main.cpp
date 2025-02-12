@@ -182,6 +182,7 @@ enum class TargetType
 {
 	StaticLibrary,
 	SharedLibrary,
+	HeaderOnlyLibrary,
 	Executable
 };
 
@@ -196,6 +197,9 @@ static TargetType DetectTargetType(const json& targetJson)
 	it = targetJson.find("is_shared_library");
 	if(it != targetJson.end() && it.value().template get<bool>())
 		return TargetType::SharedLibrary;
+	it = targetJson.find("is_header_only_library");
+	if(it != targetJson.end() && it.value().template get<bool>())
+		return TargetType::HeaderOnlyLibrary;
 	return TargetType::Executable;
 }
 
@@ -248,6 +252,7 @@ static constexpr std::string_view GetTargetTypeStr(TargetType targetType)
 		case TargetType::StaticLibrary : return "static_library";
 		case TargetType::SharedLibrary : return "shared_library";
 		case TargetType::Executable : return "executable";
+		case TargetType::HeaderOnlyLibrary: assert(false && "HeaderOnlyLibrary wasn't expected here");
 	}
 	return "executable";
 }
@@ -276,41 +281,54 @@ static void ProcessTarget(const json& targetJson, std::ostringstream& stream,
 	// Libraries have is_install set to true by default
 	// Executables have is_install set to false by default
 	bool isInstall = GetJsonKeyValue<bool>(targetJson, "is_install", (targetType == TargetType::Executable) ? false : true);
-	std::string_view targetTypeStr = GetTargetTypeStr(targetType);
-	stream << std::format("{} = {}('{}'", name, targetTypeStr, name);
-	stream << std::format(",\n\t{}{} + sources", name, sources_suffix);
-	stream << std::format(",\n\tdependencies: dependencies + {}{}", name, dependencies_suffix);
-	stream << std::format(",\n\tinclude_directories: inc");
-	stream << std::format(",\n\tinstall: {}", isInstall ? "true" : "false");
-	if(targetType != TargetType::Executable)
+	if(targetType != TargetType::HeaderOnlyLibrary)
 	{
-		stream << ",\n\tinstall_dir: lib_install_dir";
-		stream << std::format(",\n\tc_args: {}{} + {}{}", name, build_defines_suffix, name, use_defines_suffix);
-		stream << std::format(",\n\tcpp_args: {}{} + {}{}", name, build_defines_suffix, name, use_defines_suffix);
+		std::string_view targetTypeStr = GetTargetTypeStr(targetType);
+		stream << std::format("{} = {}('{}'", name, targetTypeStr, name);
+		stream << std::format(",\n\t{}{} + sources", name, sources_suffix);
+		stream << std::format(",\n\tdependencies: dependencies + {}{}", name, dependencies_suffix);
+		stream << std::format(",\n\tinclude_directories: inc");
+		stream << std::format(",\n\tinstall: {}", isInstall ? "true" : "false");
+		if(targetType != TargetType::Executable)
+		{
+			stream << ",\n\tinstall_dir: lib_install_dir";
+			stream << std::format(",\n\tc_args: {}{} + {}{}", name, build_defines_suffix, name, use_defines_suffix);
+			stream << std::format(",\n\tcpp_args: {}{} + {}{}", name, build_defines_suffix, name, use_defines_suffix);
+		}
+		else
+		{
+			stream << std::format(",\n\tc_args: {}{}", name, build_defines_suffix);
+			stream << std::format(",\n\tcpp_args: {}{}", name, build_defines_suffix);
+		}
+		stream << std::format(", \n\tlink_args: {}{}[host_machine.system()]", name, link_args_suffix);
+		stream << ",\n\tgnu_symbol_visibility: 'hidden'";
+		stream << "\n)\n";
 	}
-	else
-	{
-		stream << std::format(",\n\tc_args: {}{}", name, build_defines_suffix);
-		stream << std::format(",\n\tcpp_args: {}{}", name, build_defines_suffix);
-	}
-	stream << std::format(", \n\tlink_args: {}{}[host_machine.system()]", name, link_args_suffix);
-	stream << ",\n\tgnu_symbol_visibility: 'hidden'";
-	stream << "\n)\n";
 
 	if(targetType != TargetType::Executable)
 	{
 		stream << std::format("{}_dep = declare_dependency(\n", name);
-		stream << "\tlink_with: " << name << ",\n";
+		if(targetType != TargetType::HeaderOnlyLibrary)
+			stream << "\tlink_with: " << name << ",\n";
 		stream << "\tinclude_directories: inc,\n";
 		stream << std::format("\tcompile_args: {}{} + build_mode_defines\n", name, use_defines_suffix);
 		stream << ")\n";
 		if(isInstall)
 		{
-			stream << "pkgmod.generate(" << name << ",\n";
+			stream << "pkgmod.generate(";
+			if(targetType != TargetType::HeaderOnlyLibrary)
+				stream << name << ",\n";
 			stream << "\tname: " << single_quoted_str(GetJsonKeyValue<std::string>(targetJson, "friendly_name", projMetaInfo.name)) << ",\n";
 			stream << "\tdescription: " << single_quoted_str(GetJsonKeyValue<std::string>(targetJson, "description", projMetaInfo.description)) << ",\n";
 			stream << "\tfilebase: " << single_quoted_str(name) << ",\n";
 			stream << "\tinstall_dir: pkgconfig_install_path,\n";
+			if(targetType == TargetType::HeaderOnlyLibrary)
+			{
+				stream << "\tsubdirs: ";
+				stream << "[ ";
+				ProcessStringList(targetJson, "subdirs", stream);
+				stream << " ],\n";
+			}
 			stream << std::format("\textra_cflags: {}{} + build_mode_defines\n", name, use_defines_suffix);
 			stream << ")\n";
 		}
@@ -351,28 +369,17 @@ static void ProcessTargetJson(const json& targetJson, std::ostringstream& stream
 			{ "darwin", "darwin_link_args" }
 		}, "_link_args");
 	TargetType targetType = DetectTargetType(targetJson);
-	switch(targetType)
+	if(targetType == TargetType::Executable)
 	{
-		case TargetType::StaticLibrary:
-		{
-			ProcessStringListDeclare(targetJson, stream, "build_defines", "_build_defines");
-			ProcessStringListDeclare(targetJson, stream, "use_defines", "_use_defines");
-			ProcessTarget(targetJson, stream, TargetType::StaticLibrary, projMetaInfo, "_sources", "_dependencies",  "_link_args", "_build_defines", "_use_defines");
-			break;
-		}
-		case TargetType::SharedLibrary:
-		{
-			ProcessStringListDeclare(targetJson, stream, "build_defines", "_build_defines");
-			ProcessStringListDeclare(targetJson, stream, "use_defines", "_use_defines");
-			ProcessTarget(targetJson, stream, TargetType::SharedLibrary, projMetaInfo, "_sources", "_dependencies", "_link_args", "_build_defines", "_use_defines");
-			break;
-		}
-		case TargetType::Executable:
-		{
-			ProcessStringListDeclare(targetJson, stream, "defines", "_defines");
-			ProcessTarget(targetJson, stream, TargetType::Executable, projMetaInfo, "_sources", "_dependencies", "_link_args", "_defines");
-			break;
-		}
+		ProcessStringListDeclare(targetJson, stream, "defines", "_defines");
+		ProcessTarget(targetJson, stream, TargetType::Executable, projMetaInfo, "_sources", "_dependencies", "_link_args", "_defines");
+	}
+	// Static Library, Shared Library, and Header Only Library targets
+	else
+	{
+		ProcessStringListDeclare(targetJson, stream, "build_defines", "_build_defines");
+		ProcessStringListDeclare(targetJson, stream, "use_defines", "_use_defines");
+		ProcessTarget(targetJson, stream, targetType, projMetaInfo, "_sources", "_dependencies",  "_link_args", "_build_defines", "_use_defines");
 	}
 }
 
