@@ -297,14 +297,21 @@ struct ProjectMetaInfo
 	std::string description;
 };
 
-static void ProcessTarget(const json& targetJson, std::ostringstream& stream,
-				TargetType targetType,
-				ProjectMetaInfo& projMetaInfo,
-				std::string_view sources_suffix = "",
-				std::string_view dependencies_suffix = "",
-				std::string_view link_args_suffix = "",
-				std::string_view build_defines_suffix = "", 
-				std::string_view use_defines_suffix = "")
+struct VarSuffixData
+{
+	std::string_view sources;
+	std::string_view dependencies;
+	std::string_view linkArgs;
+	std::string_view buildDefines;
+	std::string_view useDefines;
+	std::string_view includeDirs;
+};
+
+static void ProcessTarget(const json& targetJson, 
+							std::ostringstream& stream,
+							TargetType targetType,
+							ProjectMetaInfo& projMetaInfo,
+							VarSuffixData& suffixData)
 {
 	std::string name = GetJsonKeyValue<std::string>(targetJson, "name");
 	// Libraries have is_install set to true by default
@@ -314,22 +321,24 @@ static void ProcessTarget(const json& targetJson, std::ostringstream& stream,
 	{
 		std::string_view targetTypeStr = GetTargetTypeStr(targetType);
 		stream << std::format("{} = {}('{}'", name, targetTypeStr, name);
-		stream << std::format(",\n\t{}{} + sources", name, sources_suffix);
-		stream << std::format(",\n\tdependencies: dependencies + {}{}", name, dependencies_suffix);
-		stream << std::format(",\n\tinclude_directories: inc");
+		stream << std::format(",\n\t{}{} + sources", name, suffixData.sources);
+		stream << std::format(",\n\tdependencies: dependencies + {}{}", name, suffixData.dependencies);
+		// NOTE: include_directies([...]) + include_directories([...]) is not possible in meson
+		// So we need to use arrays to combine them
+		stream << std::format(",\n\tinclude_directories: [inc, {}{}]", name, suffixData.includeDirs);
 		stream << std::format(",\n\tinstall: {}", isInstall ? "true" : "false");
 		if(targetType != TargetType::Executable)
 		{
 			stream << ",\n\tinstall_dir: lib_install_dir";
-			stream << std::format(",\n\tc_args: {}{} + {}{}", name, build_defines_suffix, name, use_defines_suffix);
-			stream << std::format(",\n\tcpp_args: {}{} + {}{}", name, build_defines_suffix, name, use_defines_suffix);
+			stream << std::format(",\n\tc_args: {}{} + {}{}", name, suffixData.buildDefines, name, suffixData.useDefines);
+			stream << std::format(",\n\tcpp_args: {}{} + {}{}", name, suffixData.buildDefines, name, suffixData.useDefines);
 		}
 		else
 		{
-			stream << std::format(",\n\tc_args: {}{}", name, build_defines_suffix);
-			stream << std::format(",\n\tcpp_args: {}{}", name, build_defines_suffix);
+			stream << std::format(",\n\tc_args: {}{}", name, suffixData.buildDefines);
+			stream << std::format(",\n\tcpp_args: {}{}", name, suffixData.buildDefines);
 		}
-		stream << std::format(", \n\tlink_args: {}{}[host_machine.system()]", name, link_args_suffix);
+		stream << std::format(", \n\tlink_args: {}{}[host_machine.system()]", name, suffixData.linkArgs);
 		stream << ",\n\tgnu_symbol_visibility: 'hidden'";
 		stream << "\n)\n";
 	}
@@ -339,8 +348,8 @@ static void ProcessTarget(const json& targetJson, std::ostringstream& stream,
 		stream << std::format("{}_dep = declare_dependency(\n", name);
 		if(targetType != TargetType::HeaderOnlyLibrary)
 			stream << "\tlink_with: " << name << ",\n";
-		stream << "\tinclude_directories: inc,\n";
-		stream << std::format("\tcompile_args: {}{} + build_mode_defines\n", name, use_defines_suffix);
+		stream << std::format("\tinclude_directories: [inc, {}{}],\n", name, suffixData.includeDirs);
+		stream << std::format("\tcompile_args: {}{} + build_mode_defines\n", name, suffixData.useDefines);
 		stream << ")\n";
 		if(isInstall)
 		{
@@ -356,7 +365,7 @@ static void ProcessTarget(const json& targetJson, std::ostringstream& stream,
 				stream << "\tsubdirs: ";
 				ProcessStringList(targetJson, "subdirs", stream);
 			}
-			stream << std::format("\textra_cflags: {}{} + build_mode_defines\n", name, use_defines_suffix);
+			stream << std::format("\textra_cflags: {}{} + build_mode_defines\n", name, suffixData.useDefines);
 			stream << ")\n";
 		}
 	}
@@ -384,8 +393,14 @@ static void ProcessStringListDictDeclare(const json& targetJson, std::ostringstr
 static void ProcessTargetJson(const json& targetJson, std::ostringstream& stream, ProjectMetaInfo& projMetaInfo)
 {
 	stream << "# -------------- Target: " << GetJsonKeyValue<std::string>(targetJson, "name") << " ------------------\n";
-	ProcessStringListDeclare(targetJson, stream, "sources", "_sources");
-	ProcessStringListDeclare(targetJson, stream, "dependencies", "_dependencies", [](std::string_view quotedToken) -> std::string
+	VarSuffixData suffixData { };
+	suffixData.sources = "_sources";
+	suffixData.dependencies = "_dependencies";
+	suffixData.linkArgs = "_link_args";
+	suffixData.includeDirs = "_include_dirs";
+	ProcessStringListDeclare(targetJson, stream, "sources", suffixData.sources);
+	ProcessStringListDeclare(targetJson, stream, "include_dirs", suffixData.includeDirs);
+	ProcessStringListDeclare(targetJson, stream, "dependencies", suffixData.dependencies, [](std::string_view quotedToken) -> std::string
 	{
 		return std::format("dependency({})", quotedToken);
 	});
@@ -394,19 +409,22 @@ static void ProcessTargetJson(const json& targetJson, std::ostringstream& stream
 			{ "windows", "windows_link_args" },
 			{ "linux", "linux_link_args" },
 			{ "darwin", "darwin_link_args" }
-		}, "_link_args");
+		}, suffixData.linkArgs);
 	TargetType targetType = DetectTargetType(targetJson);
 	if(targetType == TargetType::Executable)
 	{
-		ProcessStringListDeclare(targetJson, stream, "defines", "_defines");
-		ProcessTarget(targetJson, stream, TargetType::Executable, projMetaInfo, "_sources", "_dependencies", "_link_args", "_defines");
+		suffixData.buildDefines = "_defines";
+		ProcessStringListDeclare(targetJson, stream, "defines", suffixData.buildDefines);
+		ProcessTarget(targetJson, stream, TargetType::Executable, projMetaInfo, suffixData);
 	}
 	// Static Library, Shared Library, and Header Only Library targets
 	else
 	{
-		ProcessStringListDeclare(targetJson, stream, "build_defines", "_build_defines");
-		ProcessStringListDeclare(targetJson, stream, "use_defines", "_use_defines");
-		ProcessTarget(targetJson, stream, targetType, projMetaInfo, "_sources", "_dependencies",  "_link_args", "_build_defines", "_use_defines");
+		suffixData.buildDefines = "_build_defines";
+		suffixData.useDefines = "_use_defines";
+		ProcessStringListDeclare(targetJson, stream, "build_defines", suffixData.buildDefines);
+		ProcessStringListDeclare(targetJson, stream, "use_defines", suffixData.useDefines);
+		ProcessTarget(targetJson, stream, targetType, projMetaInfo, suffixData);
 	}
 }
 
