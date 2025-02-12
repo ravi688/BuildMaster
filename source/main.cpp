@@ -168,7 +168,16 @@ static std::string ApplyMetaInfo(std::string_view str)
 	}
 	const std::string_view linkDirStr = "link_dir:";
 	if(copyStr.find(linkDirStr) != std::string::npos)
-		copyStr.replace(0, linkDirStr.length(), "'-L' + ");
+	{
+		std::string linkMetaStr = "'-L' + ";
+		// Only literal linker lookup paths must be relative to project's source root
+		// The reason we don't do this for paths specified by variables is that variables would generally
+		// originate out of shell environment variables (like CUDA_PATH or VK_SDK_PATH), and these are already absolute paths.
+		// If one needs to specify a literal indirectly (via a variable) then he must add `meson.project_source_root() + '/'` himself explicitly.
+		if(!isDollarSignFound)
+			linkMetaStr.append("meson.project_source_root() + '/' + ");
+		copyStr.replace(0, linkDirStr.length(), linkMetaStr);
+	}
 	// If neither `link_dir: ` is found, nor $ is found, then we just wrap the str in single quotes
 	else if(!isDollarSignFound)
 		return single_quoted_str(str);
