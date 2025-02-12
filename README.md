@@ -309,6 +309,17 @@ The above command prints version and build mode information on stdout.
 | `linux_link_args` | list of string(s) | It is optioanl, but useful for specifying linux specific libraries
 | `darwin_link_args` | list of string(s) | It is optional, but useful for specifying darwin (macOS) sepcific libraries
 | `dependencies` | list of string(s) | It is optional, it can be used in project scope or in target context both, if used in target context then the specified dependencies will only be applicable to that target only
+| `include_dirs` | list of string(s) | It is optional in the context of target, When specified in a target context then these include directories are only used for that target and won't affect other targets
+| `sub_dirs` | list of string(s) | It is optional, and can only be used in header only library target context. It specifies the list of sub-directories containing header file which needs to be exported via pkg-config package file.
+
+### Targets
+The following boolean config vars can only be specified in `target` context in `build_master.json`, And only one of them can exist in a target. That means all of them are mutually exclusive. 
+| Target Type | Description
+|-------------|-------------
+| `is_static_library` | If set `true`, then the target builds as static library
+| `is_shared_library` | If set `true`, then the target builds as shared library
+| `is_header_only_library` | If set `true`, then the target builds as header only library, that means no binaries, just header file installations
+| `is_executable` | If set `true`, then the target builds as executable
 
 ### Have you got benefited with my work?
 <a href="https://www.buymeacoffee.com/raviprakashsingh" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>
