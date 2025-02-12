@@ -17,8 +17,10 @@ It can do the same thing in just 70 lines of json that the bare meson does in 24
 I started this project to integrate frequently occuring **Build Configurations**, **Packaging Workflow**, and **Generating CI Workflows for GitLab and GitHub** across all my projects into just one system called `Build Master`. In fact, the goal of this project is to make it so good that any type of C/C++ software can be **Built**, **Tested**, **Packaged** and **Deployed** in just a few commands.
 
 ## Current Capabilities
+- [x] Only for C and C++ based projects
 - [x] Multiple Targets
 - [x] Simple and Minimalistic Json based build script (`build_master.json`)
+- [x] Tested with projects with upto 5 to 7 dependencies (with diamond dependencies) and multiple targets can be built easily
 - [ ] Single command packaging and bundling for popular package managers (apt, dpkg, pacman, rpm), and window installers (.msi and .exe)
 
 ## Building and Installing
