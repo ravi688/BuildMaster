@@ -122,9 +122,8 @@ else
 endif
 
 # pkg-config package installation
-python = find_program('python')
 # Try PKG_CONFIG_PATH first, typicallly it succeeds on MINGW64 (MSYS2)
-python_pkg_config_path_result_bm_internal__ = run_command(python, '-c', 'import os; print(os.environ["PKG_CONFIG_PATH"])', check : false)
+python_pkg_config_path_result_bm_internal__ = run_command(find_program('python'), '-c', 'import os; print(os.environ["PKG_CONFIG_PATH"])', check : false)
 pkgconfig_install_path_bm_internal__ = ''
 if python_pkg_config_path_result_bm_internal__.returncode() == 0
   str = python_pkg_config_path_result_bm_internal__.stdout()
