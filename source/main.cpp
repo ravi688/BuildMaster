@@ -330,15 +330,15 @@ static void ProcessTarget(const json& targetJson,
 	{
 		std::string_view targetTypeStr = GetTargetTypeStr(targetType);
 		stream << std::format("{} = {}('{}'", name, targetTypeStr, name);
-		stream << std::format(",\n\t{}{} + sources", name, suffixData.sources);
-		stream << std::format(",\n\tdependencies: dependencies + {}{}", name, suffixData.dependencies);
+		stream << std::format(",\n\t{}{} + sources_bm_internal__", name, suffixData.sources);
+		stream << std::format(",\n\tdependencies: dependencies_bm_internal__ + {}{}", name, suffixData.dependencies);
 		// NOTE: include_directies([...]) + include_directories([...]) is not possible in meson
 		// So we need to use arrays to combine them
-		stream << std::format(",\n\tinclude_directories: [inc, {}{}]", name, suffixData.includeDirs);
+		stream << std::format(",\n\tinclude_directories: [inc_bm_internal__, {}{}]", name, suffixData.includeDirs);
 		stream << std::format(",\n\tinstall: {}", isInstall ? "true" : "false");
 		if(targetType != TargetType::Executable)
 		{
-			stream << ",\n\tinstall_dir: lib_install_dir";
+			stream << ",\n\tinstall_dir: lib_install_dir_bm_internal__";
 			stream << std::format(",\n\tc_args: {}{}", name, suffixData.buildDefines);
 			stream << std::format(",\n\tcpp_args: {}{}", name, suffixData.buildDefines);
 		}
@@ -357,8 +357,8 @@ static void ProcessTarget(const json& targetJson,
 		stream << std::format("{}_dep = declare_dependency(\n", name);
 		if(targetType != TargetType::HeaderOnlyLibrary)
 			stream << "\tlink_with: " << name << ",\n";
-		stream << std::format("\tinclude_directories: [inc, {}{}],\n", name, suffixData.includeDirs);
-		stream << std::format("\tcompile_args: {}{} + build_mode_defines\n", name, suffixData.useDefines);
+		stream << std::format("\tinclude_directories: [inc_bm_internal__, {}{}],\n", name, suffixData.includeDirs);
+		stream << std::format("\tcompile_args: {}{} + build_mode_defines_bm_internal__\n", name, suffixData.useDefines);
 		stream << ")\n";
 		if(isInstall)
 		{
@@ -368,13 +368,13 @@ static void ProcessTarget(const json& targetJson,
 			stream << "\tname: " << single_quoted_str(GetJsonKeyValue<std::string>(targetJson, "friendly_name", projMetaInfo.name)) << ",\n";
 			stream << "\tdescription: " << single_quoted_str(GetJsonKeyValue<std::string>(targetJson, "description", projMetaInfo.description)) << ",\n";
 			stream << "\tfilebase: " << single_quoted_str(name) << ",\n";
-			stream << "\tinstall_dir: pkgconfig_install_path,\n";
+			stream << "\tinstall_dir: pkgconfig_install_path_bm_internal__,\n";
 			if(targetType == TargetType::HeaderOnlyLibrary)
 			{
 				stream << "\tsubdirs: ";
 				ProcessStringList(targetJson, "subdirs", stream);
 			}
-			stream << std::format("\textra_cflags: {}{} + build_mode_defines\n", name, suffixData.useDefines);
+			stream << std::format("\textra_cflags: {}{} + build_mode_defines_bm_internal__\n", name, suffixData.useDefines);
 			stream << ")\n";
 		}
 	}
@@ -403,10 +403,10 @@ static void ProcessTargetJson(const json& targetJson, std::ostringstream& stream
 {
 	stream << "# -------------- Target: " << GetJsonKeyValue<std::string>(targetJson, "name") << " ------------------\n";
 	VarSuffixData suffixData { };
-	suffixData.sources = "_sources";
-	suffixData.dependencies = "_dependencies";
-	suffixData.linkArgs = "_link_args";
-	suffixData.includeDirs = "_include_dirs";
+	suffixData.sources = "_sources_bm_internal__";
+	suffixData.dependencies = "_dependencies_bm_internal__";
+	suffixData.linkArgs = "_link_args_bm_internal__";
+	suffixData.includeDirs = "_include_dirs_bm_internal__";
 	ProcessStringListDeclare(targetJson, stream, "sources", suffixData.sources);
 	ProcessStringListDeclare(targetJson, stream, "include_dirs", suffixData.includeDirs);
 	ProcessStringListDeclare(targetJson, stream, "dependencies", suffixData.dependencies, [](std::string_view quotedToken) -> std::string
@@ -422,15 +422,15 @@ static void ProcessTargetJson(const json& targetJson, std::ostringstream& stream
 	TargetType targetType = DetectTargetType(targetJson);
 	if(targetType == TargetType::Executable)
 	{
-		suffixData.buildDefines = "_defines";
+		suffixData.buildDefines = "_defines_bm_internal__";
 		ProcessStringListDeclare(targetJson, stream, "defines", suffixData.buildDefines);
 		ProcessTarget(targetJson, stream, TargetType::Executable, projMetaInfo, suffixData);
 	}
 	// Static Library, Shared Library, and Header Only Library targets
 	else
 	{
-		suffixData.buildDefines = "_build_defines";
-		suffixData.useDefines = "_use_defines";
+		suffixData.buildDefines = "_build_defines_bm_internal__";
+		suffixData.useDefines = "_use_defines_bm_internal__";
 		ProcessStringListDeclare(targetJson, stream, "build_defines", suffixData.buildDefines);
 		ProcessStringListDeclare(targetJson, stream, "use_defines", suffixData.useDefines);
 		ProcessTarget(targetJson, stream, targetType, projMetaInfo, suffixData);
