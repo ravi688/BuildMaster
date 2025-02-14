@@ -172,7 +172,27 @@ The above command prints version and build mode information on stdout.
     ]
 }
 ```
-## Another Example Build Master json file (Taken from [SKVMOIP](https://github.com/ravi688/SKVMOIP))
+## Example Build Master json file (Taken from [TempSys](https://github.com/ravi688/TemplateSystem))
+```cpp
+{
+    "project_name": "TemplateSystem",
+    "canonical_name": "tempsys",
+    "description" : "Macro based Templates in C",
+    "install_headers" : [
+        {
+            "files" : [ "include/template_system.h" ]
+        }
+    ],
+    "include_dirs": "include",
+    "targets": [
+        {
+            "name": "tempsys",
+            "is_header_only_library" : true
+        }
+    ]
+}
+```
+## Example Build Master json file (Taken from [SKVMOIP](https://github.com/ravi688/SKVMOIP))
 ```cpp
 {
     "project_name" : "SKVMOIP",
