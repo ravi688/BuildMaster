@@ -22,6 +22,8 @@ I started this project to integrate frequently occuring **Build Configurations**
 - [x] Simple and Minimalistic Json based build script (`build_master.json`)
 - [x] Tested with projects with upto 5 to 7 dependencies (with diamond dependencies) and multiple targets can be built easily
 - [ ] Single command packaging and bundling for popular package managers (apt, dpkg, pacman, rpm), and window installers (.msi and .exe)
+- [ ] Github/Gitlab workflow generation for Building the project in different environments on different platforms each
+- [ ] Distributed project building for large number of source files to compile, C++ takes more time to compile so this feature is particularly beneficial for C++ projects
 
 ## Building and Installing
 Get the source code
