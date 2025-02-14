@@ -373,6 +373,7 @@ static void ProcessTarget(const json& targetJson,
 			{
 				stream << "\tsubdirs: ";
 				ProcessStringList(targetJson, "subdirs", stream);
+				stream << ", ";
 			}
 			stream << std::format("\textra_cflags: {}{} + build_mode_defines_bm_internal__\n", name, suffixData.useDefines);
 			stream << ")\n";
