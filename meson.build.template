@@ -115,15 +115,15 @@ add_project_link_arguments('-m64', link_args_bm_internal__, language : 'c')
 add_project_link_arguments('-m64', link_args_bm_internal__, language : 'cpp')
 
 # Build type specific defines
-build_mode_defines_bm_internal__ = defines_bm_internal__
+project_build_mode_defines_bm_internal__ = defines_bm_internal__
 if get_option('buildtype') == 'release'
   add_project_arguments(release_defines_bm_internal__, language : 'c')
   add_project_arguments(release_defines_bm_internal__, language : 'cpp')
-  build_mode_defines_bm_internal__ += release_defines_bm_internal__
+  project_build_mode_defines_bm_internal__ += release_defines_bm_internal__
 else
   add_project_arguments(debug_defines_bm_internal__, language : 'c')
   add_project_arguments(debug_defines_bm_internal__, language : 'cpp')
-  build_mode_defines_bm_internal__ += debug_defines_bm_internal__
+  project_build_mode_defines_bm_internal__ += debug_defines_bm_internal__
 endif
 
 # pkg-config package installation
