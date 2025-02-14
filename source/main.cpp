@@ -449,6 +449,7 @@ static constexpr std::pair<std::string_view, std::string_view> gPlaceHolderToJso
 {
 	{ "$$release_defines$$", "release_defines" },
 	{ "$$debug_defines$$", "debug_defines" },
+	{ "$$defines$$", "defines" },
 	{ "$$sources$$", "sources" },
 	{ "$$include_dirs$$", "include_dirs" },
 	{ "$$windows_link_args$$", "windows_link_args" },
