@@ -511,6 +511,23 @@ static std::string ProcessTemplate(std::string_view templateStr, const json& bui
 			str.append(std::format("install_subdir('{}', install_dir : get_option('includedir'))\n", value.template get<std::string>()));
 		return str;
 	});
+	SubstitutePlaceholder(str, "$$install_headers$$", [&buildMasterJson]() -> std::string
+	{
+		auto it = buildMasterJson.find("install_headers");
+		if(it == buildMasterJson.end())
+			return "";
+		std::ostringstream stream;
+		for(const auto& value : it.value())
+		{
+			stream << "install_headers(";
+			ProcessStringList(value, "files", stream, "\n");
+			auto it = value.find("subdir");
+			if(it != value.end())
+				stream << ", subdir: " << single_quoted_str((*it).template get<std::string>());
+			stream << ")\n";
+		}
+		return stream.str();
+	});
 	SubstitutePlaceholder(str, "$$build_targets$$", [&buildMasterJson]() -> std::string
 	{
 		ProjectMetaInfo projMetaInfo;

@@ -167,3 +167,4 @@ $$build_targets$$
 #--------------------------------Header Intallation----------------------------------
 # Header installation
 $$install_subdirs$$
+$$install_headers$$
