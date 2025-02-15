@@ -335,6 +335,7 @@ The above command prints version and build mode information on stdout.
 | `sources` | list of string(s) | it is optional for targets
 | `defines`, `use_defines`, `debug_defines`, `release_defines`, `build_defines` | list of string(s) | All are optional
 | `install_header_dirs` | list of strings(s) | It is optional if you do not intend to install any libraries
+| `install_headers` | list of json values containing `files` list of strings and optional `subdir` | It is optional if you do not intend to install any specific header files
 | `windows_link_args` | list of string(s) | It is optional, but useful for specifying window specific libraries
 | `linux_link_args` | list of string(s) | It is optioanl, but useful for specifying linux specific libraries
 | `darwin_link_args` | list of string(s) | It is optional, but useful for specifying darwin (macOS) sepcific libraries
