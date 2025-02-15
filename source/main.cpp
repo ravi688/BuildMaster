@@ -339,13 +339,13 @@ static void ProcessTarget(const json& targetJson,
 		if(targetType != TargetType::Executable)
 		{
 			stream << ",\n\tinstall_dir: lib_install_dir_bm_internal__";
-			stream << std::format(",\n\tc_args: {}{}", name, suffixData.buildDefines);
-			stream << std::format(",\n\tcpp_args: {}{}", name, suffixData.buildDefines);
+			stream << std::format(",\n\tc_args: {}{} + project_build_mode_defines_bm_internal__", name, suffixData.buildDefines);
+			stream << std::format(",\n\tcpp_args: {}{} + project_build_mode_defines_bm_internal__", name, suffixData.buildDefines);
 		}
 		else
 		{
-			stream << std::format(",\n\tc_args: {}{}", name, suffixData.buildDefines);
-			stream << std::format(",\n\tcpp_args: {}{}", name, suffixData.buildDefines);
+			stream << std::format(",\n\tc_args: {}{} + project_build_mode_defines_bm_internal__", name, suffixData.buildDefines);
+			stream << std::format(",\n\tcpp_args: {}{} + project_build_mode_defines_bm_internal__", name, suffixData.buildDefines);
 		}
 		stream << std::format(", \n\tlink_args: {}{}[host_machine.system()]", name, suffixData.linkArgs);
 		stream << ",\n\tgnu_symbol_visibility: 'hidden'";
@@ -358,7 +358,7 @@ static void ProcessTarget(const json& targetJson,
 		if(targetType != TargetType::HeaderOnlyLibrary)
 			stream << "\tlink_with: " << name << ",\n";
 		stream << std::format("\tinclude_directories: [inc_bm_internal__, {}{}],\n", name, suffixData.includeDirs);
-		stream << std::format("\tcompile_args: {}{} + build_mode_defines_bm_internal__\n", name, suffixData.useDefines);
+		stream << std::format("\tcompile_args: {}{} + project_build_mode_defines_bm_internal__\n", name, suffixData.useDefines);
 		stream << ")\n";
 		if(isInstall)
 		{
@@ -375,7 +375,7 @@ static void ProcessTarget(const json& targetJson,
 				ProcessStringList(targetJson, "subdirs", stream);
 				stream << ", ";
 			}
-			stream << std::format("\textra_cflags: {}{} + build_mode_defines_bm_internal__\n", name, suffixData.useDefines);
+			stream << std::format("\textra_cflags: {}{} + project_build_mode_defines_bm_internal__\n", name, suffixData.useDefines);
 			stream << ")\n";
 		}
 	}
