@@ -12,6 +12,8 @@
 | Linux | [![Linux Debug Mode Unit Tests](https://github.com/ravi688/BuildMaster/actions/workflows/debug_unit_test.yml/badge.svg)](https://github.com/ravi688/BuildMaster/actions/workflows/debug_unit_test.yml) <br>
 | Windows | [![Windows Debug Mode Unit Test](https://github.com/ravi688/BuildMaster/actions/workflows/windows_debug_unit_test.yml/badge.svg)](https://github.com/ravi688/BuildMaster/actions/workflows/windows_debug_unit_test.yml)
 | Windows | [![Windows Release Mode Unit Test](https://github.com/ravi688/BuildMaster/actions/workflows/windows_release_unit_test.yml/badge.svg)](https://github.com/ravi688/BuildMaster/actions/workflows/windows_release_unit_test.yml)
+| FreeBSD | TODO
+| MacOS | TODO
 
 
 ## Objective
