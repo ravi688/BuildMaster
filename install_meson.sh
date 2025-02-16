@@ -47,3 +47,6 @@ $CREATE_ZIPAPP_PY --outfile $ZIPAPP_OUTPUT_PATH --interpreter '/usr/bin/env pyth
 # ------------------ Now copy that to final install path -------------
 echo "Copying to $INSTALL_PATH"
 cp $ZIPAPP_OUTPUT_PATH $INSTALL_PATH
+
+if [[ "$OSTYPE" == "linux-gnu" ]]; then
+	chmod +x $INSTALL_PATH
