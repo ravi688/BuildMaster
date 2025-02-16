@@ -18,8 +18,8 @@ jobs:
       run: |
         sudo chmod +x ./ci-build.sh
         sudo ./ci-build.sh
-	sudo chmod +x ./install_meson.sh
-	sudo ./install_meson.sh
+        sudo chmod +x ./install_meson.sh
+        sudo ./install_meson.sh
 
     - name: Run Unit Tests
       run: |
