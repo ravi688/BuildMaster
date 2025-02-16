@@ -715,11 +715,11 @@ static std::ostream& operator<<(std::ostream& stream, const std::vector<std::str
 // It internally runs "which"
 static std::optional<std::string> GetExecutablePath(std::string_view executable)
 {
-    std::vector<const char*> args = { gWhichCmd, executable.data(), nullptr};
+    std::vector<const char*> args = { gWhichCmd.data(), executable.data(), nullptr};
 
     reproc_t* process = reproc_new();
     reproc_options options = {};
-    
+
     char buffer[4096];
     std::string result;
     bool isSuccess = true;
