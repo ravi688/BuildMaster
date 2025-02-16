@@ -50,3 +50,4 @@ cp $ZIPAPP_OUTPUT_PATH $INSTALL_PATH
 
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
 	chmod +x $INSTALL_PATH
+fi
