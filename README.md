@@ -35,6 +35,16 @@ Get the source code
 ```
 $ git clone https://github.com/ravi688/BuildMaster.git
 ```
+#### Install modified meson
+For Msys2 (windows)
+```
+$ ./install_meson.sh
+```
+For Linux
+```
+$ sudo ./install_meson.sh
+```
+#### Install build_master
 Setup build configuration
 ```
 $ meson setup build --buildtype=release
@@ -43,6 +53,7 @@ Now compile and install
 ```
 $ meson install -C build
 ```
+
 ## Resolving Build Errors
 If you get certificate verify errors then execute the following commands in msys2 (mingw64)
 ```
