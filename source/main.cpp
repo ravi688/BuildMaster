@@ -28,6 +28,15 @@ using json = nlohmann::ordered_json;
 
 static constexpr std::string_view gBuildMasterJsonFilePath = "build_master.json";
 static constexpr std::string_view gMesonBuildScriptFilePath = "meson.build";
+static constexpr std::string_view gPython = "python3";
+static constexpr std::string_view gMesonExecutableName = "build_master_meson";
+// If on windows, use where instead of which
+#ifdef _WIN32
+static constexpr std::string_view gWhichCmd = "where";
+// Otherwise use which (on linux and freebsd)
+#else
+static constexpr std::string_view gWhichCmd = "which";
+#endif
 
 
 // directoryBase: The base directory against which the the final path need to be calculated
@@ -702,6 +711,42 @@ static std::ostream& operator<<(std::ostream& stream, const std::vector<std::str
 	return stream;
 }
 
+// Returns absolute path of a shell command
+// It internally runs "which"
+static std::optional<std::string> GetExecutablePath(std::string_view executable)
+{
+    std::vector<const char*> args = { gWhichCmd.data(), executable.data(), nullptr};
+
+    reproc_t* process = reproc_new();
+    reproc_options options = {};
+
+    char buffer[4096];
+    std::string result;
+    bool isSuccess = true;
+
+    auto r = reproc_start(process, args.data(), options);
+    if (r >= 0)
+    {
+        // Read the output
+        while (true)
+        {
+            int bytes_read = reproc_read(process, REPROC_STREAM_OUT, reinterpret_cast<uint8_t*>(buffer), sizeof(buffer));
+            if (bytes_read < 0)
+                break;
+            result.append(buffer, bytes_read);
+        }
+        reproc_wait(process, REPROC_INFINITE);
+    } else isSuccess = false;
+    reproc_destroy(process);
+    // Remove trailing newline or carrage return characters if present
+    if (!result.empty())
+    	while(result.back() == '\n' || result.back() == '\r')
+        	result.pop_back();
+    if(isSuccess)
+    	return { result };
+    else return { };
+}
+
 // build_master meson
 // directory: value passed to --directory flag
 static void InvokeMeson(std::string_view directory, const std::vector<std::string>& args)
@@ -711,16 +756,26 @@ static void InvokeMeson(std::string_view directory, const std::vector<std::strin
 	// Build c-style argument list
   	std::vector<const char*> cArgs;
   	cArgs.reserve(args.size() + 1);
-  	cArgs.push_back("meson");
+  	cArgs.push_back(gPython.data());
+  	auto fullMesonExePath = GetExecutablePath(gMesonExecutableName);
+  	if(!fullMesonExePath)
+  	{
+  		std::cerr << "Errro: Faild to get absolute path of "<< gMesonExecutableName << "\n";
+  		return;
+  	}
+  	cArgs.push_back(fullMesonExePath->c_str());
   	for(const auto& arg : args)
   		cArgs.push_back(arg.data());
   	cArgs.push_back(nullptr);
-  	std::cout << "Running meson with args: " << args << "\n";
+  	std::cout << "Running " << gMesonExecutableName << " with args: " << args << "\n";
   	reproc_options opts { };
   	if(directory.size())
   		opts.working_directory = directory.data();
   	// Execute the meson command with the built arguments
-  	exit(reproc_run(cArgs.data(), opts));
+  	auto returnCode = reproc_run(cArgs.data(), opts);
+  	if(returnCode < 0)
+  		std::cerr << "Error: Failed to run " << gMesonExecutableName << ", have you executed ./install_meson.sh ever?\n";
+  	exit(returnCode);
 }
 
 static void PrintVersionInfo() noexcept

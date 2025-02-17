@@ -20,6 +20,8 @@ jobs:
       - name: Build executable
         run: |
           DEBUG=1 ./ci-build.sh
+          ./install_meson.sh
+	  ./install_meson.sh
       - name: Run unit tests
         run: |
           ./ci-unit-test.sh
