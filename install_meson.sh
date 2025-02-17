@@ -49,5 +49,5 @@ echo "Copying to $INSTALL_PATH"
 cp $ZIPAPP_OUTPUT_PATH $INSTALL_PATH
 
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
-	chmod +x $INSTALL_PATH
+	chmod +x "${INSTALL_PATH}/build_master_meson"
 fi
