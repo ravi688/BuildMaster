@@ -64,6 +64,7 @@ class TestVersion(TestBase):
         output.assert_exists_dir('include')
         output.assert_exists_dir('include/myproject')
         output.assert_exists_file('include/myproject/' + ('api_defines.hpp' if is_cpp else 'api_defines.h'))
+        output.assert_exists_file('include/myproject/' + ('defines.hpp' if is_cpp else 'defines.h'))
         output.assert_exists_file('source/main.cpp' if is_cpp else 'source/main.c')
 
         self.check_meson_build_script()
@@ -91,6 +92,7 @@ class TestVersion(TestBase):
             output.assert_exists_dir(os.path.join(temp_dir, 'include'))
             output.assert_exists_dir(os.path.join(temp_dir, 'include', 'myproject'))
             output.assert_exists_file(os.path.join(temp_dir, 'include', 'myproject', 'api_defines.hpp' if is_cpp else 'api_defines.h'))
+            output.assert_exists_file(os.path.join(temp_dir, 'include', 'myproject', 'defines.hpp' if is_cpp else 'defines.h'))
             output.assert_exists_file(os.path.join(temp_dir, 'source/main.cpp' if is_cpp else 'source/main.c'))
             self.check_meson_build_script(temp_dir)
             self.cleanupArtifacts()
