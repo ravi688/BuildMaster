@@ -56,7 +56,13 @@ sources = files('source/main.cpp')
 # Whether to install executable?
 is_install_executable = true
 
-dependencies = [ dependency('cli11'), dependency('nlohmann_json'), dependency('reproc'), dependency('spdlog') ]
+dependencies = [ 
+  dependency('cli11'), 
+  dependency('nlohmann_json'), 
+  dependency('reproc'),
+  dependency('common'),
+  dependency('spdlog')
+]
 
 # ------------------------------ INTERNALS ---------------------------------------
 

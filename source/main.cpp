@@ -11,6 +11,7 @@
 #include <nlohmann/json.hpp>
 #include <reproc/run.h>
 #include <spdlog/spdlog.h>
+#include <common/defines.hpp> // for com::to_upper()
 
 // NOTE: Following defines are Automatically Defined by the Build System (meson.build)
 // BUILDMASTER_VERSION_MAJOR
@@ -637,23 +638,33 @@ static void WriteTextFile(const std::string_view filePath, const std::string_vie
 	file.close();
 }
 
+// Creates a text file with initData if doesn't exist already. It also creates any intermediate directories if doesn't exist.
+static void CreateFile(const std::filesystem::path& path, std::string_view initData)
+{
+	auto pathCopy = path;
+	auto dirs = pathCopy.remove_filename();
+	try
+	{
+		if(!std::filesystem::create_directories(dirs))
+			std::cout << "Info: Directory " << dirs.string() << " already exists\n";
+	} catch(const std::exception& except)
+	{
+		std::cerr << "Error: Failed to create " << dirs.string() << ", " << except.what();
+	}
+	if(std::filesystem::exists(path))
+		std::cout << std::format("Info: file \"{}\" already exists, skipping creating\n", path.string());
+	else
+		WriteTextFile(path.string(), initData);
+}
+
+using namespace std::literals;
+
+// include/<canonical_name>/api_defines.h or .hpp
+// include/<canonical_name>/defines.h or .hpp
+// source/main.cpp
 static void GenerateSeedFiles(const ProjectInitCommandArgs& args)
 {
-	// Generate source/main.cpp
-	const std::string_view mainSourceFileName { args.isCreateCpp ? "main.cpp" : "main.c" };
-	auto sourcesDirPath = GetPathStrRelativeToDir(args.directory, "source");
-	if(std::filesystem::exists(sourcesDirPath))
-		std::cout << std::format("Info: directory \"{}\" already exists, skipping creating \"{}\" in it\n", sourcesDirPath, mainSourceFileName);
-	else
-	{
-		if(!std::filesystem::create_directory(sourcesDirPath))
-		{
-			std::cout << std::format("Error: Failed to create directory {}\n", sourcesDirPath);
-			exit(EXIT_FAILURE);
-		}
-
-		auto mainSourcePath = GetPathStrRelativeToDir(sourcesDirPath, mainSourceFileName);
-		const std::string_view mainSourceInitData = args.isCreateCpp ?
+	constexpr std::string_view mainSourceInitData[2] = {
 R"(
 #include <iostream>
 
@@ -662,7 +673,7 @@ int main()
 	std::cout << "Hello World";
 	return 0;
 }
-)" :
+)",
 R"(
 #include <stdio.h>
 
@@ -671,22 +682,43 @@ int main()
 	puts("Hello World");
 	return 0;
 }
+)" };
+	constexpr std::string_view apiDefinesInitTemplate =
+R"(
+#pragma once
+
+#if (defined _WIN32 || defined __CYGWIN__) && defined(__GNUC__)
+#	define {0}_IMPORT_API __declspec(dllimport)
+#	define {0}_EXPORT_API __declspec(dllexport)
+#else
+#	define {0}_IMPORT_API __attribute__((visibility("default")))
+#	define {0}_EXPORT_API __attribute__((visibility("default")))
+#endif
+
+#ifdef {0}_BUILD_STATIC_LIBRARY
+#	define {0}_API
+#elif defined({0}_BUILD_DYNAMIC_LIBRARY)
+#	define {0}_API {0}_EXPORT_API
+#elif defined({0}_USE_DYNAMIC_LIBRARY)
+#	define {0}_API {0}_IMPORT_API
+#elif defined({0}_USE_STATIC_LIBRARY)
+#	define {0}_API
+#else
+#	define {0}_API
+#endif
 )";
-		WriteTextFile(mainSourcePath, mainSourceInitData);
-		std::cout << std::format("Info: {} is generated\n", mainSourcePath);
+	std::string apiDefinesInitData = std::format(apiDefinesInitTemplate, com::to_upper(args.canonicalName));
+	auto sourceDir = std::filesystem::path(args.directory) / "source"sv;
+	auto includeDir = std::filesystem::path(args.directory) / "include"sv / args.canonicalName;
+	if(args.isCreateCpp)
+	{
+		CreateFile(sourceDir / "main.cpp", mainSourceInitData[0]);
+		CreateFile(includeDir / "api_defines.hpp", apiDefinesInitData);
 	}
-	// Generate include directory
-	auto includeDirPath = GetPathStrRelativeToDir(args.directory, "include");
-	if(std::filesystem::exists(includeDirPath))
-		std::cout << std::format("Info: directory \"{}\" already exists, no need to create\n", includeDirPath);
 	else
 	{
-		if(!std::filesystem::create_directory(includeDirPath))
-		{
-			std::cout << std::format("Error: Failed to create directory {}\n", includeDirPath);
-			exit(EXIT_FAILURE);
-		}
-		std::cout << std::format("Info: Created directory \"{}\"\n", includeDirPath);
+		CreateFile(sourceDir / "main.c", mainSourceInitData[1]);
+		CreateFile(includeDir / "api_defines.h", apiDefinesInitData);
 	}
 }
 
