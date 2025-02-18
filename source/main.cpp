@@ -707,18 +707,32 @@ R"(
 #	define {0}_API
 #endif
 )";
-	std::string apiDefinesInitData = std::format(apiDefinesInitTemplate, com::to_upper(args.canonicalName));
+	constexpr std::string_view definesInitTemplate =
+R"(
+#pragma once
+#include <{0}/api_defines.{1}>
+#if !defined({2}_RELEASE) && !defined({2}_DEBUG)
+#   warning "None of {2}_RELEASE && {2}_DEBUG is defined; using {2}_DEBUG"
+#   define {2}_DEBUG
+#endif
+)";
+	auto canonicalNameUpper = com::to_upper(args.canonicalName);
+	std::string apiDefinesInitData = std::format(apiDefinesInitTemplate, canonicalNameUpper);
+	std::string_view headerFileExt { args.isCreateCpp ? "hpp" : "h" };
+	std::string definesInitData = std::format(definesInitTemplate, args.canonicalName, headerFileExt, canonicalNameUpper);
 	auto sourceDir = std::filesystem::path(args.directory) / "source"sv;
 	auto includeDir = std::filesystem::path(args.directory) / "include"sv / args.canonicalName;
 	if(args.isCreateCpp)
 	{
 		CreateFile(sourceDir / "main.cpp", mainSourceInitData[0]);
 		CreateFile(includeDir / "api_defines.hpp", apiDefinesInitData);
+		CreateFile(includeDir / "defines.hpp", definesInitData);
 	}
 	else
 	{
 		CreateFile(sourceDir / "main.c", mainSourceInitData[1]);
 		CreateFile(includeDir / "api_defines.h", apiDefinesInitData);
+		CreateFile(includeDir / "defines.h", definesInitData);
 	}
 }
 
