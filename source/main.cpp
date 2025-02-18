@@ -645,8 +645,7 @@ static void CreateFile(const std::filesystem::path& path, std::string_view initD
 	auto dirs = pathCopy.remove_filename();
 	try
 	{
-		if(!std::filesystem::create_directories(dirs))
-			std::cout << "Info: Directory " << dirs.string() << " already exists\n";
+		std::filesystem::create_directories(dirs);
 	} catch(const std::exception& except)
 	{
 		std::cerr << "Error: Failed to create " << dirs.string() << ", " << except.what();
