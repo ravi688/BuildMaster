@@ -396,8 +396,8 @@ But this can be automated by creating a bash script and hooking it to the genera
 In the `download_packages.sh` script:
 ```sh
 #! /usr/bin/bash
-$ meson wrap install glfw
-$ meson wrap install vulkan-headers
+meson wrap install glfw
+meson wrap install vulkan-headers
 ```
 > [!Note]
 > If the hooked script returns non-zero code then an error about it will be printed. <br>
