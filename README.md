@@ -45,6 +45,7 @@ $ ./install_meson.sh
 ```
 For Linux
 ```
+$ sudo chmod +x ./install_meson.sh
 $ sudo ./install_meson.sh
 ```
 #### Install build_master
