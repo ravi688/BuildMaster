@@ -82,6 +82,9 @@ By default `init` command would create `main.c` file in `source` directory, if y
 $ build_master meson setup build --buildtype=release
 ```
 The above command would invoke `meson setup build --buildtype=release` which will create a `build` directory and configure the project build config as release
+> [!Tip]
+> You can also pass `--directory=path/to/dir` as `build_master --directory=path/to/dir meson setup build --buildtype=release`
+
 ### Compiling the project
 ```
 $ build_master meson compile -C build
