@@ -1,3 +1,3 @@
 #!/bin/bash
 
-python ./unit_test/unit_test.py
+python ./unit_test/preliminary_tests.py
