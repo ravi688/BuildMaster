@@ -480,7 +480,6 @@ static constexpr std::pair<std::string_view, std::string_view> gPlaceHolderToJso
 	{ "$$include_dirs$$", "include_dirs" },
 	{ "$$windows_link_args$$", "windows_link_args" },
 	{ "$$linux_link_args$$", "linux_link_args" },
-	{ "$$linux_link_args$$", "linux_link_args" },
 	{ "$$darwin_link_args$$", "darwin_link_args" }
 };
 
