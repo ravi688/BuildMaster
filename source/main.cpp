@@ -497,7 +497,7 @@ static std::string ProcessTemplate(std::string_view templateStr, const json& bui
 		if(auto result = GetJsonKeyValueOrNull<std::string>(buildMasterJson, "pre_config_hook"); result.has_value())
 		{
 			constexpr std::string_view formatStr = 
-R"prehook_result = run_command(find_program('bash'), '{}', check : false)
+R"(prehook_result = run_command(find_program('bash'), '{}', check : false)
 if prehook_result.returncode() == 0
         message('Running Pre-configure hook run success')
 else
