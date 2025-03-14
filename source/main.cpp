@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <string>
 #include <string_view>
+#include <type_traits>
 
 #include <CLI/CLI.hpp>
 #include <nlohmann/json.hpp>
@@ -229,7 +230,14 @@ static void SubstitutePlaceholder(std::string& str, std::string_view placeholder
 		str.replace(it, placeholderName.size(), substitute);
 }
 
-static void SubstitutePlaceholder(std::string& str, std::string_view placeholderName, std::function<std::string(void)> callback)
+template<typename T, typename ReturnType, typename... Args>
+concept Callable = requires(const T& callable)
+{
+	{ callable(std::declval<Args>()...) } -> std::convertible_to<ReturnType>;
+};
+
+template<Callable<std::string> Callback>
+static void SubstitutePlaceholder(std::string& str, std::string_view placeholderName, const Callback& callback)
 {
 	auto it = str.find(placeholderName);
 	if(it != std::string::npos)
@@ -265,10 +273,18 @@ static TargetType DetectTargetType(const json& targetJson)
 }
 
 template<typename T>
-static T GetJsonKeyValue(const json& jsonObj, std::string_view key, std::optional<T> defaultValue = {})
+static std::optional<T> GetJsonKeyValueOrNull(const json& jsonObj, std::string_view key)
 {
 	if(auto it = jsonObj.find(key); it != jsonObj.end())
-		return it.value().template get<T>();
+		return { it.value().template get<T>() };
+	return { };
+}
+
+template<typename T>
+static T GetJsonKeyValue(const json& jsonObj, std::string_view key, std::optional<T> defaultValue = {})
+{
+	if(auto result = GetJsonKeyValueOrNull<T>(jsonObj, key); result.has_value())
+		return result.value();
 	if(!defaultValue.has_value())
 		throw std::runtime_error(std::format("No such key: {} exists in the json provided, and default value is not given either", key));
 	return std::move(defaultValue.value());
@@ -475,6 +491,22 @@ static std::string ProcessTemplate(std::string_view templateStr, const json& bui
 	SubstitutePlaceholder(str, "$$canonical_name$$", single_quoted_str(GetJsonKeyValue<std::string>(buildMasterJson, "canonical_name")));
 	for(const auto& pair : gPlaceHolderToJsonKeyMappings)
 		SubstitutePlaceholderJson(str, buildMasterJson, pair.first, pair.second);
+
+	SubstitutePlaceholder(str, "$$pre_config_hook$$", [&buildMasterJson]() -> std::string
+	{
+		if(auto result = GetJsonKeyValueOrNull<std::string>(buildMasterJson, "pre_config_hook"); result.has_value())
+		{
+			constexpr std::string_view formatStr = 
+R"(prehook_result = run_command(find_program('bash'), '{}', check : false)
+if prehook_result.returncode() == 0
+        message('Running Pre-configure hook run success')
+else
+        error('Pre-configure hook returned non-zero return code')
+endif)";
+			return std::format(formatStr, result.value());
+		}
+		return "";
+	});
 	SubstitutePlaceholder(str, "$$vars$$", [&buildMasterJson]() -> std::string
 	{
 		auto it = buildMasterJson.find("vars");

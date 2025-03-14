@@ -371,6 +371,38 @@ The above command prints version and build mode information on stdout.
 | `include_dirs` | list of string(s) | It is optional in the context of target, When specified in a target context then these include directories are only used for that target and won't affect other targets
 | `sub_dirs` | list of string(s) | It is optional, and can only be used in header only library target context. It specifies the list of sub-directories containing header file which needs to be exported via pkg-config package file.
 
+### Pre Configure Script Execution
+Different projects have different dependencies, and some require execution of complex commands to build and install such dependencies.
+Often initial procedures are documented in the wikis of the respective projects.
+But this can be automated by creating a bash script and hooking it to the generated meson.build, so that whenever the project is (re)configured, the script will be run first to download or build/install complex dependencies.
+#### Usage Example
+```cpp
+{
+    "canonical_name": "bufferlib",
+    "include_dirs": "include",
+    "project_name": "BufferLib",
+    "pre_configure_hook" : "download_packages.sh", // <---- here
+    "targets": [
+        {
+            "is_executable": true,
+            "name": "bufferlib",
+            "sources": [
+                "source/main.c"
+            ]
+        }
+    ]
+}
+```
+In the `download_packages.sh` script:
+```sh
+#! /usr/bin/bash
+$ meson wrap install glfw
+$ meson wrap install vulkan-headers
+```
+> [!Note]
+> If the hooked script returns non-zero code then an error about it will be printed. <br>
+> If the script returns without any errors and returns zero, the success will be printed.
+
 ### Targets
 The following boolean config vars can only be specified in `target` context in `build_master.json`, And only one of them can exist in a target. That means all of them are mutually exclusive. 
 | Target Type | Description
