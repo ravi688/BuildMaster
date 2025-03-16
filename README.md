@@ -403,6 +403,10 @@ meson wrap install vulkan-headers
 > If the hooked script returns non-zero code then an error about it will be printed. <br>
 > If the script returns without any errors and returns zero, the success will be printed.
 
+> [!Warning]
+> The pre-config hook script executs everytime `meson setup` command is executed via `build_master`.
+> Therefore, make sure the result/behaviour of the script is idempotent, i.e. if the script is executed multiple times then it should lead to the same result as if it ran only once.
+
 ### Targets
 The following boolean config vars can only be specified in `target` context in `build_master.json`, And only one of them can exist in a target. That means all of them are mutually exclusive. 
 | Target Type | Description
