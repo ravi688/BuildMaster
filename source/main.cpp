@@ -10,6 +10,7 @@
 #include <CLI/CLI.hpp>
 #include <nlohmann/json.hpp>
 #include <reproc/run.h>
+#include <spdlog/spdlog.h>
 
 // NOTE: Following defines are Automatically Defined by the Build System (meson.build)
 // BUILDMASTER_VERSION_MAJOR
@@ -30,6 +31,7 @@ using json = nlohmann::ordered_json;
 static constexpr std::string_view gBuildMasterJsonFilePath = "build_master.json";
 static constexpr std::string_view gMesonBuildScriptFilePath = "meson.build";
 static constexpr std::string_view gPython = "python3";
+static constexpr std::string_view gBash = "bash";
 static constexpr std::string_view gMesonExecutableName = "build_master_meson";
 // If on windows, use where instead of which
 #ifdef _WIN32
@@ -490,22 +492,6 @@ static std::string ProcessTemplate(std::string_view templateStr, const json& bui
 	SubstitutePlaceholder(str, "$$canonical_name$$", single_quoted_str(GetJsonKeyValue<std::string>(buildMasterJson, "canonical_name")));
 	for(const auto& pair : gPlaceHolderToJsonKeyMappings)
 		SubstitutePlaceholderJson(str, buildMasterJson, pair.first, pair.second);
-
-	SubstitutePlaceholder(str, "$$pre_config_hook$$", [&buildMasterJson]() -> std::string
-	{
-		if(auto result = GetJsonKeyValueOrNull<std::string>(buildMasterJson, "pre_config_hook"); result.has_value())
-		{
-			constexpr std::string_view formatStr = 
-R"(prehook_result = run_command(find_program('bash'), '{}', check : false)
-if prehook_result.returncode() == 0
-        message('Running Pre-configure hook run success')
-else
-        error('Pre-configure hook returned non-zero return code')
-endif)";
-			return std::format(formatStr, result.value());
-		}
-		return "";
-	});
 	SubstitutePlaceholder(str, "$$vars$$", [&buildMasterJson]() -> std::string
 	{
 		auto it = buildMasterJson.find("vars");
@@ -778,32 +764,68 @@ static std::optional<std::string> GetExecutablePath(std::string_view executable)
     else return { };
 }
 
+static decltype(auto) InvokeExec(const std::vector<std::string>& args, std::string_view workDir)
+{
+	// Build c-style argument list
+  	std::vector<const char*> cArgs;
+  	cArgs.reserve(args.size());
+  	for(const auto& arg : args)
+  		cArgs.push_back(arg.data());
+  	cArgs.push_back(nullptr);
+
+  	// Setup options
+  	reproc_options opts { };
+  	if(workDir.size())
+  		opts.working_directory = workDir.data();
+  	// Execute the meson command with the built arguments
+  	auto returnCode = reproc_run(cArgs.data(), opts);
+  	return returnCode;
+}
+
+// NOTE: 'args' : is the list of arguments followed by 'meson', that means 'meson' as the first argument is not included in this list
+static void RunPreConfigScript(std::string_view directory, const std::vector<std::string>& args)
+{
+	// Only proceed when 'meson setup ...' is executed, otherwise return
+	if(args.size() == 0 || args[0] != "setup")
+		return;
+	json buildMasterJson = ParseBuildMasterJson(directory);
+	if(auto result = GetJsonKeyValueOrNull<std::string>(buildMasterJson, "pre_config_hook"); result.has_value())
+	{
+		spdlog::info("Running pre-config hook script");
+		auto returnCode = InvokeExec({ std::string { gBash }, result.value() }, directory);
+		if(returnCode < 0)
+		{			
+			spdlog::error("pre-config hook script returned non-zero code");
+			exit(returnCode);
+		}
+		spdlog::info("pre-config hook script run success");
+	}
+}
+
 // build_master meson
 // directory: value passed to --directory flag
 static void InvokeMeson(std::string_view directory, const std::vector<std::string>& args)
 {
 	// Ensure the meson.build script is upto date
 	RegenerateMesonBuildScript(directory);
-	// Build c-style argument list
-  	std::vector<const char*> cArgs;
-  	cArgs.reserve(args.size() + 1);
-  	cArgs.push_back(gPython.data());
+	// Run pre-configure script if 'meson setup' command is executed
+	RunPreConfigScript(directory, args);
+  	// Prepare arguments (adding python as the parent process for meson pyzipapp)
+  	std::vector<std::string> argsCopy;
+  	argsCopy.reserve(args.size() + 1);
+  	argsCopy.push_back(gPython.data());
   	auto fullMesonExePath = GetExecutablePath(gMesonExecutableName);
   	if(!fullMesonExePath)
   	{
   		std::cerr << "Errro: Faild to get absolute path of "<< gMesonExecutableName << "\n";
   		return;
   	}
-  	cArgs.push_back(fullMesonExePath->c_str());
+  	argsCopy.push_back(fullMesonExePath.value());
   	for(const auto& arg : args)
-  		cArgs.push_back(arg.data());
-  	cArgs.push_back(nullptr);
+  		argsCopy.push_back(arg.data());
+  	// Now run the python command, it will now run the meson pyzipapp
   	std::cout << "Running " << gMesonExecutableName << " with args: " << args << "\n";
-  	reproc_options opts { };
-  	if(directory.size())
-  		opts.working_directory = directory.data();
-  	// Execute the meson command with the built arguments
-  	auto returnCode = reproc_run(cArgs.data(), opts);
+  	auto returnCode = InvokeExec(argsCopy, directory);
   	if(returnCode < 0)
   		std::cerr << "Error: Failed to run " << gMesonExecutableName << ", have you executed ./install_meson.sh ever?\n";
   	exit(returnCode);

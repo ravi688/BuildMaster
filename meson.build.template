@@ -48,9 +48,6 @@ project($$project_name$$, 'c', 'cpp',
   ]
 )
 
-# Pre configure hook (shell script run)
-$$pre_config_hook$$
-
 # Variables
 $$vars$$
 
