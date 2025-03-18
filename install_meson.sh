@@ -15,11 +15,12 @@ BUILD_PATH="${CLONE_DIR}/build"
 
 if [ -d $CLONE_PATH ]; then
 	echo "The repo already seem to be cloned, skipping git clone"
-	echo "Pulling origin master"
-	(cd $CLONE_PATH && git pull origin master --ff)
 else
 	git clone $GIT_REPO_PATH $CLONE_PATH
 fi
+
+echo "Pulling origin ravi688-meson"
+(cd $CLONE_PATH && git fetch && git checkout ravi688-meson && git pull origin ravi688-meson --ff)
 
 
 # --------------- If build subdir doesn't exist creat one ---------------
