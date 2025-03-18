@@ -25,7 +25,8 @@ echo "Pulling origin ravi688-meson"
 
 # --------------- If build subdir doesn't exist creat one ---------------
 # ----------------And if alredy exists then cleanup old artifacts -------
-ZIPAPP_OUTPUT_PATH="${BUILD_PATH}/build_master_meson"
+ZIPAPP_NAME=build_master_meson.pyz
+ZIPAPP_OUTPUT_PATH="${BUILD_PATH}/${ZIPAPP_NAME}"
 
 if [ -d $BUILD_PATH ]; then
 	if [ -f $ZIPAPP_OUTPUT_PATH ]; then
@@ -40,7 +41,7 @@ if [ -z $INSTALL_PREFIX ]; then
 	INSTALL_PREFIX="/usr"
 fi
 
-# ----------------- Create Zipapp 'build_master_meson' ---------------
+# ----------------- Create Zipapp '${ZIPAPP_NAME}' ---------------
 INSTALL_PATH="${INSTALL_PREFIX}/bin/"
 CREATE_ZIPAPP_PY="${CLONE_PATH}/packaging/create_zipapp.py"
 
@@ -52,5 +53,5 @@ echo "Copying to $INSTALL_PATH"
 cp $ZIPAPP_OUTPUT_PATH $INSTALL_PATH
 
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
-	chmod +x "${INSTALL_PATH}/build_master_meson"
+	chmod +x "${INSTALL_PATH}/${ZIPAPP_NAME}"
 fi
