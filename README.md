@@ -55,7 +55,7 @@ $ meson setup build --buildtype=release
 ```
 Now compile and install
 ```
-$ meson install -C build
+$ meson install -C build --skip-subprojects
 ```
 
 ## Resolving Build Errors
