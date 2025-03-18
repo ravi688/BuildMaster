@@ -52,16 +52,18 @@ inc = include_directories()
 
 # Main executable source
 sources = files('source/main.cpp')
-
-# Whether to install executable?
-is_install_executable = true
+meson_exec_sources = files('source/main.meson_exec.cpp')
 
 dependencies = [ 
   dependency('cli11'), 
   dependency('nlohmann_json'), 
-  dependency('reproc'),
+  dependency('invoke'),
   dependency('common'),
   dependency('spdlog')
+]
+
+meson_exec_dependencies = [
+  dependency('invoke')
 ]
 
 # ------------------------------ INTERNALS ---------------------------------------
@@ -89,11 +91,19 @@ else
 endif
 
 # Main executable
-exe = executable('build_master',
+executable('build_master',
   sources,
   dependencies: dependencies,
   include_directories : inc,
-  install : is_install_executable
+  install : true
+)
+
+# Meson exec executable
+executable('build_master_meson',
+  meson_exec_sources,
+  dependencies : meson_exec_dependencies,
+  include_directories : inc,
+  install : true
 )
 
 install_data('meson.build.template', install_dir : meson_build_template_install_dir)
