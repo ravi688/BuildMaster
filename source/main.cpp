@@ -6,6 +6,7 @@
 #include <string>
 #include <string_view>
 #include <type_traits>
+#include <sstream>
 
 #include <CLI/CLI.hpp>
 #include <nlohmann/json.hpp>
@@ -784,6 +785,51 @@ static void RunPreConfigScript(std::string_view directory, const std::vector<std
 	}
 }
 
+static std::string SelectPath(const std::vector<std::string>& paths)
+{
+	#ifdef _WIN32
+		for(const auto& path : paths)
+			if(path.find("mingw") != std::string::npos)
+				return path;
+		spdlog::error("Couldn't find mingw equivalent executable path");
+		exit(EXIT_FAILURE);
+	#else
+		return paths[0];
+	#endif
+}
+
+// cmdName: name of the command (not the full path, just the name)
+// restArgs: The rest of the arguments which need to be passed to that cmd
+static std::vector<std::string> BuildArgumentsForCmdRun(std::string_view cmdName, const std::vector<std::string>& restArgs)
+{
+  	std::vector<std::string> finalArgs;
+  	finalArgs.reserve(restArgs.size() + 1);
+  	auto paths = invoke::GetExecutablePaths(cmdName);
+  	if(!paths)
+  	{
+  		spdlog::error("Couldn't find paths for the executable: {}", cmdName);
+  		exit(EXIT_FAILURE);
+  	}
+  	auto fullMesonExePath = SelectPath(paths.value());;
+  	finalArgs.push_back(fullMesonExePath);
+  	for(const auto& arg : restArgs)
+  		finalArgs.push_back(arg);
+  	return finalArgs;
+}
+
+// cmdName: Just the name of the command
+// restArgs: The rest of the argumentst which need to be passed to that cmd
+static decltype(auto) RunCmd(std::string_view cmdName, std::string_view workDirectory, const std::vector<std::string>& restArgs)
+{
+  	// Prepare arguments
+  	std::vector<std::string> finalArgs = BuildArgumentsForCmdRun(cmdName, restArgs);
+  	// Logging
+  	std::stringstream strstream;
+  	strstream << "Command: " << finalArgs << "\n";
+  	spdlog::info(strstream.str());
+  	return invoke::Exec(finalArgs, workDirectory);	
+}
+
 // build_master meson
 // directory: value passed to --directory flag
 static void InvokeMeson(std::string_view directory, const std::vector<std::string>& args)
@@ -792,22 +838,8 @@ static void InvokeMeson(std::string_view directory, const std::vector<std::strin
 	RegenerateMesonBuildScript(directory);
 	// Run pre-configure script if 'meson setup' command is executed
 	RunPreConfigScript(directory, args);
-  	// Prepare arguments (adding python as the parent process for meson pyzipapp)
-  	std::vector<std::string> argsCopy;
-  	argsCopy.reserve(args.size() + 1);
-  	auto fullMesonExePaths = invoke::GetExecutablePaths(gMesonExecutableName);
-  	if(!fullMesonExePaths)
-  	{
-  		std::cerr << "Errro: Faild to get absolute path of "<< gMesonExecutableName << "\n";
-  		return;
-  	}
-  	argsCopy.push_back(fullMesonExePaths.value()[0]);
-  	for(const auto& arg : args)
-  		argsCopy.push_back(arg.data());
-  	// Now run the python command, it will now run the meson pyzipapp
-  	std::cout << "Running " << gMesonExecutableName << " with args: " << args << "\n";
-  	auto returnCode = invoke::Exec(argsCopy, directory);
-  	exit(returnCode);
+	// Run the meson command
+  	exit(RunCmd(gMesonExecutableName, directory, args));
 }
 
 static void PrintVersionInfo() noexcept
