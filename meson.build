@@ -52,7 +52,6 @@ inc = include_directories()
 
 # Main executable source
 sources = files('source/main.cpp')
-meson_exec_sources = files('source/main.meson_exec.cpp')
 
 dependencies = [ 
   dependency('cli11'), 
@@ -60,10 +59,6 @@ dependencies = [
   dependency('invoke'),
   dependency('common'),
   dependency('spdlog')
-]
-
-meson_exec_dependencies = [
-  dependency('invoke')
 ]
 
 # ------------------------------ INTERNALS ---------------------------------------
@@ -94,14 +89,6 @@ endif
 executable('build_master',
   sources,
   dependencies: dependencies,
-  include_directories : inc,
-  install : true
-)
-
-# Meson exec executable
-executable('build_master_meson',
-  meson_exec_sources,
-  dependencies : meson_exec_dependencies,
   include_directories : inc,
   install : true
 )
