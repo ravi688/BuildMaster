@@ -33,7 +33,7 @@ if ! command -v pyinstaller &> /dev/null; then
 fi
 
 # Package meson into one executable
-(cd $CLONE_PATH && pyinstaller --onefile meson.py)
+(cd $CLONE_PATH && pyinstaller --onefile --runtime-hook=runtime_hook.py --add-data "mesonbuild:mesonbuild" meson.py)
 
 if [ -z $INSTALL_PREFIX ]; then
 	INSTALL_PREFIX="/usr/bin"
