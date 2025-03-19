@@ -6,6 +6,7 @@ apt-get install -y meson cmake
 apt-get install python3
 apt-get install python-is-python3
 apt-get install libspdlog-dev
+apt-get install pip
 
 chmod +x ./install_meson.sh
 ./install_meson.sh
