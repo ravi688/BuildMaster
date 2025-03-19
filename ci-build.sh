@@ -1,9 +1,9 @@
 #!/bin/bash
 
 if [ -n "${DEBUG}" ]; then
-	meson setup build --buildtype=debug
+	build_master_meson setup build --buildtype=debug
 else
-	meson setup build --buildtype=release
+	build_master_meson setup build --buildtype=release
 fi
-meson compile -C build
-meson install -C build
+build_master_meson compile -C build
+build_master_meson install -C build
