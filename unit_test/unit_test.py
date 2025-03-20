@@ -32,7 +32,7 @@ class TestVersion(TestBase):
 
     def test_version(self):
         output = self.run_with_args(["--version"])
-        self.assertEqual(output.returncode, 0)  # Check program exited normally
+        self.assert_return_success(output)  # Check program exited normally
         # build_mater --version
         # Build Master 1.0.0
         # Build Type: Debug
@@ -45,18 +45,18 @@ class TestVersion(TestBase):
     def check_meson_build_script(self, directory = None):
         directory_arg = [f'--directory={directory}'] if directory else []
         output = self.run_with_args(['--update-meson-build'] + directory_arg)
-        self.assertEqual(output.returncode, 0)
+        self.assert_return_success(output)
         self.assertIsNone(output.stderr)
         output.assert_exists_file(os.path.join(directory if directory else '', 'meson.build'))
 
         output = self.run_with_args(directory_arg + ['meson', 'setup', 'build'])
-        self.assertEqual(output.returncode, 0)
+        self.assert_return_success(output)
         self.assertIsNone(output.stderr)
         return
 
     def run_test_init(self, is_cpp = False):
         output = self.run_with_args(['init', '--name=MyProject', '--canonical_name=myproject'] + (['--create-cpp'] if is_cpp else []))
-        self.assertEqual(output.returncode, 0)
+        self.assert_return_success(output)
         self.assertIsNone(output.stderr)
 
         output.assert_exists_file('build_master.json')
@@ -85,7 +85,7 @@ class TestVersion(TestBase):
     def run_test_init_directory(self, is_cpp = False):
         with tempfile.TemporaryDirectory() as temp_dir:
             output = self.run_with_args(['init', '--name=MyProject', '--canonical_name=myproject', f'--directory={temp_dir}'] + ['--create-cpp'] if is_cpp else [])
-            self.assertEqual(output.returncode, 0)
+            self.assert_return_success(output)
             self.assertIsNone(output.stderr)
             output.assert_exists_file(os.path.join(temp_dir, 'build_master.json'))
             output.assert_exists_dir(os.path.join(temp_dir, 'source'))

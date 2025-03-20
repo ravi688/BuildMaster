@@ -89,7 +89,11 @@ class ArtTest(unittest.TestCase):
 
         stdout, stderr = process.communicate()
         return ArtOutput (self._working_dir.name, stdout.split('\n'), stderr.split('\n') if len(stderr) > 0 else None, process.returncode)
- 
+    
+    def assert_return_success(self, output: ArtOutput):
+        self.assertEqual(output.returncode, 0, f'stdout: {output.stdout}\nstderr: {output.stderr}')
+        return
+
     def assert_string_matches_regex(self, string_data, regex_pattern):
         match = re.search(regex_pattern, string_data)
         self.assertIsNotNone(match, f'String \'{string_data}\' doesn\'t match the regex \'{regex_pattern}\'')
