@@ -16,12 +16,14 @@ BUILD_PATH="${CLONE_DIR}/build"
 if [ -d $CLONE_PATH ]; then
 	echo "The repo already seem to be cloned, skipping git clone"
 else
-	git clone $GIT_REPO_PATH $CLONE_PATH
+	sudo -u $SUDO_USER git clone $GIT_REPO_PATH $CLONE_PATH
 fi
 
 # Check appropriate branch and update it with upstream
 echo "Pulling origin ravi688-meson"
-(cd $CLONE_PATH && git fetch && git checkout ravi688-meson && git pull origin ravi688-meson --ff)
+(cd $CLONE_PATH && sudo -u $SUDO_USER git fetch \
+	&& sudo -u $SUDO_USER git checkout ravi688-meson \
+	&& sudo -u $SUDO_USER git pull origin ravi688-meson --ff)
 
 
 # ---------------- Install build_master_meson ----------------------
