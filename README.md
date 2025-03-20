@@ -6,14 +6,14 @@
 ![GitHub stars](https://img.shields.io/github/forks/ravi688/BuildMaster?style=social)
 [![GitHub stars](https://img.shields.io/github/issues/ravi688/BuildMaster?style=social)](https://github.com/ravi688/BuildMaster/issues)
 <br>
-| OS | Build Status
-|----|--------
-| Linux | [![Linux Release Mode Unit Tests](https://github.com/ravi688/BuildMaster/actions/workflows/release_unit_test.yml/badge.svg)](https://github.com/ravi688/BuildMaster/actions/workflows/release_unit_test.yml)
-| Linux | [![Linux Debug Mode Unit Tests](https://github.com/ravi688/BuildMaster/actions/workflows/debug_unit_test.yml/badge.svg)](https://github.com/ravi688/BuildMaster/actions/workflows/debug_unit_test.yml) <br>
-| Windows | [![Windows Debug Mode Unit Test](https://github.com/ravi688/BuildMaster/actions/workflows/windows_debug_unit_test.yml/badge.svg)](https://github.com/ravi688/BuildMaster/actions/workflows/windows_debug_unit_test.yml)
-| Windows | [![Windows Release Mode Unit Test](https://github.com/ravi688/BuildMaster/actions/workflows/windows_release_unit_test.yml/badge.svg)](https://github.com/ravi688/BuildMaster/actions/workflows/windows_release_unit_test.yml)
-| FreeBSD | TODO
-| MacOS | TODO
+| OS | Build Status |
+|----|-------- |
+| Linux | [![Linux Release Mode Unit Tests](https://github.com/ravi688/BuildMaster/actions/workflows/release_unit_test.yml/badge.svg)](https://github.com/ravi688/BuildMaster/actions/workflows/release_unit_test.yml) |
+| Linux | [![Linux Debug Mode Unit Tests](https://github.com/ravi688/BuildMaster/actions/workflows/debug_unit_test.yml/badge.svg)](https://github.com/ravi688/BuildMaster/actions/workflows/debug_unit_test.yml)  |
+| Windows | [![Windows Debug Mode Unit Test](https://github.com/ravi688/BuildMaster/actions/workflows/windows_debug_unit_test.yml/badge.svg)](https://github.com/ravi688/BuildMaster/actions/workflows/windows_debug_unit_test.yml) |
+| Windows | [![Windows Release Mode Unit Test](https://github.com/ravi688/BuildMaster/actions/workflows/windows_release_unit_test.yml/badge.svg)](https://github.com/ravi688/BuildMaster/actions/workflows/windows_release_unit_test.yml) |
+| FreeBSD | TODO |
+| MacOS | TODO |
 
 
 ## Objective
@@ -38,8 +38,17 @@ Get the source code
 ```
 $ git clone https://github.com/ravi688/BuildMaster.git
 ```
+#### Install some dependencies
+For Msys2/MINGW64 (windows)
+```
+$ pacman -S mingw-w64-x86_64-spdlog
+```
+For Linux
+```
+$ sudo apt install libspdlog-dev
+```
 #### Install modified meson
-For Msys2 (windows)
+For Msys2/MINGW64 (windows)
 ```
 $ ./install_meson.sh
 ```
