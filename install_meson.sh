@@ -25,5 +25,5 @@ echo "Pulling origin ravi688-meson"
 
 
 # ---------------- Install build_master_meson ----------------------
-(ch $CLONE_PATH && chmod +x ./install.sh)
+(cd $CLONE_PATH && chmod +x ./install.sh)
 (cd $CLONE_PATH && ./install.sh)
