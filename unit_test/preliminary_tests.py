@@ -2,30 +2,13 @@
 # NOTE: We could have also implemented this test in Bash Scripts with Unix Tools such as diff but I found working with Python more promising.
 
 import unittest
-import subprocess
 import sys
-# For regular expression Matching
-import re
 import logging
 import tempfile
-import arttest
+import test_base
 import os
 
-class TestBase(arttest.ArtTest):
-    def __init__(self, *args, **kwargs):
-        super().__init__('build_master', *args, **kwargs)
-        return
-
-    def assert_string_matches_regex(self, string_data, regex_pattern):
-        match = re.search(regex_pattern, string_data)
-        self.assertIsNotNone(match, f'String \'{string_data}\' doesn\'t match the regex \'{regex_pattern}\'')
-        return
-    
-    def tearDown(self):
-        self.cleanup()
-        return
-
-class TestVersion(TestBase):
+class PreliminaryTests(test_base.TestBase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         return
@@ -49,11 +32,13 @@ class TestVersion(TestBase):
         self.assertIsNone(output.stderr)
         output.assert_exists_file(os.path.join(directory if directory else '', 'meson.build'))
 
+        # build_master --directory=<directory> meson setup build
         output = self.run_with_args(directory_arg + ['meson', 'setup', 'build'])
         self.assertEqual(output.returncode, 0)
         self.assertIsNone(output.stderr)
         return
 
+    # Initialize a new project and check if the files exist which are supposed to exist
     def run_test_init(self, is_cpp = False):
         output = self.run_with_args(['init', '--name=MyProject', '--canonical_name=myproject'] + (['--create-cpp'] if is_cpp else []))
         self.assertEqual(output.returncode, 0)
@@ -82,6 +67,7 @@ class TestVersion(TestBase):
         self.run_test_init(True)
         return
 
+    # Initialize a new project into a directory and check if the files exist which are supposed to exist
     def run_test_init_directory(self, is_cpp = False):
         with tempfile.TemporaryDirectory() as temp_dir:
             output = self.run_with_args(['init', '--name=MyProject', '--canonical_name=myproject', f'--directory={temp_dir}'] + ['--create-cpp'] if is_cpp else [])
