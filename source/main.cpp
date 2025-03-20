@@ -6,11 +6,12 @@
 #include <string>
 #include <string_view>
 #include <type_traits>
+#include <sstream>
 
 #include <CLI/CLI.hpp>
 #include <nlohmann/json.hpp>
-#include <reproc/run.h>
 #include <spdlog/spdlog.h>
+#include <invoke/invoke.hpp>
 #include <common/defines.hpp> // for com::to_upper()
 
 // NOTE: Following defines are Automatically Defined by the Build System (meson.build)
@@ -27,20 +28,11 @@
 #define BUILDMASTER_VERSION_STRING BUILDMASTER_VERSION_STRINGIZE(BUILDMASTER_VERSION_MAJOR, BUILDMASTER_VERSION_MINOR, BUILDMASTER_VERSION_MICRO)
 
 using json = nlohmann::ordered_json; 
-// using json = nlohmann::json;
 
 static constexpr std::string_view gBuildMasterJsonFilePath = "build_master.json";
 static constexpr std::string_view gMesonBuildScriptFilePath = "meson.build";
-static constexpr std::string_view gPython = "python3";
 static constexpr std::string_view gBash = "bash";
 static constexpr std::string_view gMesonExecutableName = "build_master_meson";
-// If on windows, use where instead of which
-#ifdef _WIN32
-static constexpr std::string_view gWhichCmd = "where";
-// Otherwise use which (on linux and freebsd)
-#else
-static constexpr std::string_view gWhichCmd = "which";
-#endif
 
 
 // directoryBase: The base directory against which the the final path need to be calculated
@@ -773,60 +765,6 @@ static std::ostream& operator<<(std::ostream& stream, const std::vector<std::str
 	return stream;
 }
 
-// Returns absolute path of a shell command
-// It internally runs "which"
-static std::optional<std::string> GetExecutablePath(std::string_view executable)
-{
-    std::vector<const char*> args = { gWhichCmd.data(), executable.data(), nullptr};
-
-    reproc_t* process = reproc_new();
-    reproc_options options = {};
-
-    char buffer[4096];
-    std::string result;
-    bool isSuccess = true;
-
-    auto r = reproc_start(process, args.data(), options);
-    if (r >= 0)
-    {
-        // Read the output
-        while (true)
-        {
-            int bytes_read = reproc_read(process, REPROC_STREAM_OUT, reinterpret_cast<uint8_t*>(buffer), sizeof(buffer));
-            if (bytes_read < 0)
-                break;
-            result.append(buffer, bytes_read);
-        }
-        reproc_wait(process, REPROC_INFINITE);
-    } else isSuccess = false;
-    reproc_destroy(process);
-    // Remove trailing newline or carrage return characters if present
-    if (!result.empty())
-    	while(result.back() == '\n' || result.back() == '\r')
-        	result.pop_back();
-    if(isSuccess)
-    	return { result };
-    else return { };
-}
-
-static decltype(auto) InvokeExec(const std::vector<std::string>& args, std::string_view workDir)
-{
-	// Build c-style argument list
-  	std::vector<const char*> cArgs;
-  	cArgs.reserve(args.size());
-  	for(const auto& arg : args)
-  		cArgs.push_back(arg.data());
-  	cArgs.push_back(nullptr);
-
-  	// Setup options
-  	reproc_options opts { };
-  	if(workDir.size())
-  		opts.working_directory = workDir.data();
-  	// Execute the meson command with the built arguments
-  	auto returnCode = reproc_run(cArgs.data(), opts);
-  	return returnCode;
-}
-
 // NOTE: 'args' : is the list of arguments followed by 'meson', that means 'meson' as the first argument is not included in this list
 static void RunPreConfigScript(std::string_view directory, const std::vector<std::string>& args)
 {
@@ -837,7 +775,7 @@ static void RunPreConfigScript(std::string_view directory, const std::vector<std
 	if(auto result = GetJsonKeyValueOrNull<std::string>(buildMasterJson, "pre_config_hook"); result.has_value())
 	{
 		spdlog::info("Running pre-config hook script");
-		auto returnCode = InvokeExec({ std::string { gBash }, result.value() }, directory);
+		auto returnCode = invoke::Exec({ std::string { gBash }, result.value() }, directory);
 		if(returnCode < 0)
 		{			
 			spdlog::error("pre-config hook script returned non-zero code");
@@ -845,6 +783,56 @@ static void RunPreConfigScript(std::string_view directory, const std::vector<std
 		}
 		spdlog::info("pre-config hook script run success");
 	}
+}
+
+static std::string SelectPath(const std::vector<std::string>& paths)
+{
+	#ifdef _WIN32
+		// First try mingw
+		for(const auto& path : paths)
+			if(path.find("mingw") != std::string::npos)
+				return path;
+		// Then fallback to msys
+		for(const auto& path : paths)
+			if(path.find("msys") != std::string::npos)
+				return path;
+		spdlog::error("Couldn't find mingw or msys equivalent executable path");
+		exit(EXIT_FAILURE);
+	#else
+		return paths[0];
+	#endif
+}
+
+// cmdName: name of the command (not the full path, just the name)
+// restArgs: The rest of the arguments which need to be passed to that cmd
+static std::vector<std::string> BuildArgumentsForCmdRun(std::string_view cmdName, const std::vector<std::string>& restArgs)
+{
+  	std::vector<std::string> finalArgs;
+  	finalArgs.reserve(restArgs.size() + 1);
+  	auto paths = invoke::GetExecutablePaths(cmdName);
+  	if(!paths)
+  	{
+  		spdlog::error("Couldn't find paths for the executable: {}", cmdName);
+  		exit(EXIT_FAILURE);
+  	}
+  	auto fullMesonExePath = SelectPath(paths.value());;
+  	finalArgs.push_back(fullMesonExePath);
+  	for(const auto& arg : restArgs)
+  		finalArgs.push_back(arg);
+  	return finalArgs;
+}
+
+// cmdName: Just the name of the command
+// restArgs: The rest of the argumentst which need to be passed to that cmd
+static decltype(auto) RunCmd(std::string_view cmdName, std::string_view workDirectory, const std::vector<std::string>& restArgs)
+{
+  	// Prepare arguments
+  	std::vector<std::string> finalArgs = BuildArgumentsForCmdRun(cmdName, restArgs);
+  	// Logging
+  	std::stringstream strstream;
+  	strstream << "Command: " << finalArgs << "\n";
+  	spdlog::info(strstream.str());
+  	return invoke::Exec(finalArgs, workDirectory);	
 }
 
 // build_master meson
@@ -855,25 +843,8 @@ static void InvokeMeson(std::string_view directory, const std::vector<std::strin
 	RegenerateMesonBuildScript(directory);
 	// Run pre-configure script if 'meson setup' command is executed
 	RunPreConfigScript(directory, args);
-  	// Prepare arguments (adding python as the parent process for meson pyzipapp)
-  	std::vector<std::string> argsCopy;
-  	argsCopy.reserve(args.size() + 1);
-  	argsCopy.push_back(gPython.data());
-  	auto fullMesonExePath = GetExecutablePath(gMesonExecutableName);
-  	if(!fullMesonExePath)
-  	{
-  		std::cerr << "Errro: Faild to get absolute path of "<< gMesonExecutableName << "\n";
-  		return;
-  	}
-  	argsCopy.push_back(fullMesonExePath.value());
-  	for(const auto& arg : args)
-  		argsCopy.push_back(arg.data());
-  	// Now run the python command, it will now run the meson pyzipapp
-  	std::cout << "Running " << gMesonExecutableName << " with args: " << args << "\n";
-  	auto returnCode = InvokeExec(argsCopy, directory);
-  	if(returnCode < 0)
-  		std::cerr << "Error: Failed to run " << gMesonExecutableName << ", have you executed ./install_meson.sh ever?\n";
-  	exit(returnCode);
+	// Run the meson command
+  	exit(RunCmd(gMesonExecutableName, directory, args));
 }
 
 static void PrintVersionInfo() noexcept
@@ -890,10 +861,11 @@ int main(int argc, const char* argv[])
 {
 	CLI::App app;
 
-	bool isPrintVersion = false, isUpdateMesonBuild = false, isForce = false;
+	bool isPrintVersion = false, isUpdateMesonBuild = false, isMesonBuildTemplatePath = false, isForce = false;
 	std::string directory;
 	app.add_flag("--version", isPrintVersion, "Prints version number of Build Master");
 	app.add_flag("--update-meson-build", isUpdateMesonBuild, "Regenerates the meson.build script if the build_master.json file is more recent");
+	app.add_flag("--meson-build-template-path", isMesonBuildTemplatePath, "Prints lookup path of meson.build.template, typically this is only for debugging purpose");
 	app.add_flag("--force", isForce, "if --update-meson-build flag is present along with this --force then meson.build script is generated even if it is upto date");
 	app.add_option("--directory", directory, "Directory path in which to look for build_master.json, by default it is the current working directory");
 
@@ -936,6 +908,11 @@ int main(int argc, const char* argv[])
 	if(isUpdateMesonBuild)
 	{
 		RegenerateMesonBuildScript(directory, isForce);
+		return EXIT_SUCCESS;
+	}
+	if(isMesonBuildTemplatePath)
+	{
+		spdlog::info("MESON_BUILD_TEMPLATE_PATH: {}", MESON_BUILD_TEMPLATE_PATH);
 		return EXIT_SUCCESS;
 	}
 

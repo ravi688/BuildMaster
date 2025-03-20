@@ -16,11 +16,7 @@ jobs:
           install: git mingw-w64-x86_64-gcc
       - name: Build environment setup
         run: |
-          ./ci-mingw-setup.sh
-      - name: Build executable
-        run: |
-          DEBUG=1 ./ci-build.sh
-          ./install_meson.sh
+          DEBUG=1 ./ci-mingw-setup.sh
       - name: Run unit tests
         run: |
           ./ci-unit-test.sh

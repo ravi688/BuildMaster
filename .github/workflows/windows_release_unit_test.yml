@@ -17,10 +17,6 @@ jobs:
       - name: Build environment setup
         run: |
           ./ci-mingw-setup.sh
-      - name: Build executable
-        run: |
-          ./ci-build.sh
-          ./install_meson.sh
       - name: Run unit tests
         run: |
           ./ci-unit-test.sh
