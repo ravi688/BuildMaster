@@ -34,68 +34,63 @@ I started this project to integrate frequently occuring **Build Configurations**
 - [ ] Distributed project building for large number of source files to compile, C++ takes more time to compile so this feature is particularly beneficial for C++ projects
 
 ## Building and Installing
-Get the source code
-```
-$ git clone https://github.com/ravi688/BuildMaster.git
-```
 #### Install some dependencies
 For Msys2/MINGW64 (windows)
 ```
-$ pacman -S mingw-w64-x86_64-spdlog
+pacman -S mingw-w64-x86_64-python mingw-w64-x86_64-python-pip mingw-w64-x86_64-cmake mingw-w64-x86_64-spdlog
 ```
 For Linux
 ```
-$ sudo apt install libspdlog-dev
+sudo apt install python3 python-is-python3 pip cmake build-essential libspdlog-dev
 ```
-#### Install modified meson
+#### Get the source code
+```
+git clone https://github.com/ravi688/BuildMaster.git
+```
+#### Run install script
 For Msys2/MINGW64 (windows)
 ```
-$ ./install_meson.sh
+./install_build_master.sh
 ```
+> [!Note]
+> For debug mode install, run: `DEBUG=1 ./install_build_master.sh`
+
 For Linux
 ```
-$ sudo chmod +x ./install_meson.sh
-$ sudo ./install_meson.sh
+sudo ./install_build_master.sh
 ```
-#### Install build_master
-Setup build configuration
-```
-$ meson setup build --buildtype=release
-```
-Now compile and install
-```
-$ meson install -C build --skip-subprojects
-```
+> [!Note]
+> For debug mode install, run: `sudo DEBUG=1 ./install_build_master.sh`
 
 ## Resolving Build Errors
 If you get certificate verify errors then execute the following commands in msys2 (mingw64)
 ```
-$ pacman -S mingw-w64-x86_64-ca-certificates
-$ update-ca-trust
+pacman -S mingw-w64-x86_64-ca-certificates
+update-ca-trust
 ```
 If you're in linux then execute the following commands
 ```
-$ sudo apt-get install ca-certifactes
-$ update-ca-trust
+sudo apt-get install ca-certifactes
+update-ca-trust
 ```
 
 ## Usage
 ### Initializing a project
 ```
-$ build_master init --name "BufferLib" --canonical_name "bufferlib"
+build_master init --name "BufferLib" --canonical_name "bufferlib"
 ```
 The above commanad would create a file `build_master.json` containing default project configuration and `meson.build` for meson build system.
 By default `init` command would create `main.c` file in `source` directory, if you want C++ file then pass `--create-cpp` flag.
 > [!Tip]
 > You may also pass `--directory=<path to a directory>` into the above `init` sub-command to specify where to initialize the new project, all the project files will be created relative to that directory. <br>
 > There are two ways you can specify the `--directory`: <br>
-> `$ build_master init --directory=path/to/my/directory --name "BufferLib" --canonical_name "bufferlib"`, OR <br>
-> `$ build_master --directory init --name "BufferLib" --canonical_name "bufferlib"` <br>
+> `build_master init --directory=path/to/my/directory --name "BufferLib" --canonical_name "bufferlib"`, OR <br>
+> `build_master --directory init --name "BufferLib" --canonical_name "bufferlib"` <br>
 > In the latter case, the `--directory` is supplied to the `build_master` command, it acts as a fallback if `init` sub-command hasn't given the `--directory` value.
 
 ### Configuring the project
 ```
-$ build_master meson setup build --buildtype=release
+build_master meson setup build --buildtype=release
 ```
 The above command would invoke `meson setup build --buildtype=release` which will create a `build` directory and configure the project build config as release
 > [!Tip]
@@ -103,22 +98,22 @@ The above command would invoke `meson setup build --buildtype=release` which wil
 
 ### Compiling the project
 ```
-$ build_master meson compile -C build
+build_master meson compile -C build
 ```
 The above command would compile the project
 ### Regenerating the meson.build if build_master.json changes
 ```
-$ build_master --update-meson-build
+build_master --update-meson-build
 ```
 The above command checks if the current `meson.build` file is out of date and then regenerates overwriting the existing one. <br>
 OR
 ```
-$ build_master --update-meson-build --force
+build_master --update-meson-build --force
 ```
 The above command does forcibly regenerates the existing `meson.build` even if it is upto date with `build_master.json`.
 ### Displaying version of the build_master
 ```
-$ build_master --version
+build_master --version
 ```
 The above command prints version and build mode information on stdout.
 
