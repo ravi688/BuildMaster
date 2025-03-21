@@ -3,6 +3,13 @@
 # example: CLONE_DIR=<my clone path> INSTALL_PREFIX=/usr ./install_meson.sh
 
 
+# Platform detection
+if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" || "$OSTYPE" == "mingw"* ]]; then
+        PLATFORM="MINGW"
+else
+        PLATFORM="LINUX"
+fi
+
 # --------------- Git repository cloning --------------------------
 REPO_NAME=meson
 GIT_REPO_PATH="https://github.com/ravi688/${REPO_NAME}.git"
@@ -16,19 +23,15 @@ BUILD_PATH="${CLONE_DIR}/build"
 if [ -d $CLONE_PATH ]; then
 	echo "The repo already seem to be cloned, skipping git clone"
 else
-	sudo -u $SUDO_USER git clone $GIT_REPO_PATH $CLONE_PATH
+	if [[ "$PLATFORM" == "MINGW" ]]; then
+		git clone $GIT_REPO_PATH $CLONE_PATH
+	else
+		sudo -u $SUDO_USER git clone $GIT_REPO_PATH $CLONE_PATH
+	fi
 fi
 
 # Check appropriate branch and update it with upstream
 echo "Pulling origin ravi688-meson"
-
-
-# Platform detection
-if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" || "$OSTYPE" == "mingw"* ]]; then
-        PLATFORM="MINGW"
-else
-        PLATFORM="LINUX"
-fi
 
 if [[ "$PLATFORM" == "MINGW" ]]; then
 	(cd $CLONE_PATH && git fetch \
