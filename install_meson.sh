@@ -35,8 +35,8 @@ echo "Pulling origin ravi688-meson"
 
 if [[ "$PLATFORM" == "MINGW" ]]; then
 	(cd $CLONE_PATH && git fetch \
-			git checkout ravi688-meson \
-			git pull origin ravi688-meson --ff)
+			&& git checkout ravi688-meson \
+			&& git pull origin ravi688-meson --ff)
 else
 	(cd $CLONE_PATH && sudo -u $SUDO_USER git fetch \
 		&& sudo -u $SUDO_USER git checkout ravi688-meson \
