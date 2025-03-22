@@ -385,7 +385,7 @@ But this can be automated by creating a bash script and hooking it to the genera
     "canonical_name": "bufferlib",
     "include_dirs": "include",
     "project_name": "BufferLib",
-    "pre_configure_hook" : "download_packages.sh", // <---- here
+    "pre_config_hook" : "download_packages.sh", // <---- here
     "targets": [
         {
             "is_executable": true,
