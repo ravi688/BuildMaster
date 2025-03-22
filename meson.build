@@ -53,7 +53,7 @@ if python_result.returncode() == 0
   dest_dir = dest_dir.strip()
 endif
 
-meson_build_template_install_dir = join_paths(dest_dir, 'share', 'build_master')
+meson_build_template_install_dir = join_paths(dest_dir, get_option('datadir'), 'build_master')
 
 defines = [
   '-DBUILDMASTER_VERSION_MAJOR=' + meson.project_version().split('.')[0],
