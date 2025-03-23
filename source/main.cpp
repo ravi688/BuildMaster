@@ -132,7 +132,6 @@ static json ParseBuildMasterJson(std::string_view directory)
 {
 	std::string jsonStr = LoadTextFile(GetBuildMasterJsonFilePath(directory));
 	EraseCppComments(jsonStr);
-	std::cout << jsonStr << "\n";
 	json data = json::parse(jsonStr);
 	return data;
 }
