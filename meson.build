@@ -63,10 +63,15 @@ defines = [
 ]
 
 # Include directories
-inc = include_directories()
+inc = include_directories('include')
 
 # Main executable source
-sources = files('source/main.cpp')
+sources = files('source/invoke_meson.cpp',
+                'source/json_parse.cpp',
+                'source/misc.cpp',
+                'source/meson_build_gen.cpp',
+                'source/pre_config_script.cpp',
+                'source/build_master.main.cpp')
 
 dependencies = [ 
   dependency('cli11'), 
