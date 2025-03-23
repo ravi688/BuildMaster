@@ -765,12 +765,8 @@ static std::ostream& operator<<(std::ostream& stream, const std::vector<std::str
 	return stream;
 }
 
-// NOTE: 'args' : is the list of arguments followed by 'meson', that means 'meson' as the first argument is not included in this list
-static void RunPreConfigScript(std::string_view directory, const std::vector<std::string>& args)
+static bool RunPreConfigScript(std::string_view directory)
 {
-	// Only proceed when 'meson setup ...' is executed, otherwise return
-	if(args.size() == 0 || args[0] != "setup")
-		return;
 	json buildMasterJson = ParseBuildMasterJson(directory);
 	if(auto result = GetJsonKeyValueOrNull<std::string>(buildMasterJson, "pre_config_hook"); result.has_value())
 	{
@@ -782,7 +778,9 @@ static void RunPreConfigScript(std::string_view directory, const std::vector<std
 			exit(returnCode);
 		}
 		spdlog::info("pre-config hook script run success");
+		return true;
 	}
+	return false;
 }
 
 static std::string SelectPath(const std::vector<std::string>& paths)
@@ -842,7 +840,8 @@ static void InvokeMeson(std::string_view directory, const std::vector<std::strin
 	// Ensure the meson.build script is upto date
 	RegenerateMesonBuildScript(directory);
 	// Run pre-configure script if 'meson setup' command is executed
-	RunPreConfigScript(directory, args);
+	if(args.size() == 0 || args[0] != "setup")
+		RunPreConfigScript(directory);
 	// Run the meson command
   	exit(RunCmd(gMesonExecutableName, directory, args));
 }
@@ -861,11 +860,16 @@ int main(int argc, const char* argv[])
 {
 	CLI::App app;
 
-	bool isPrintVersion = false, isUpdateMesonBuild = false, isMesonBuildTemplatePath = false, isForce = false;
+	bool isPrintVersion = false, 
+		isUpdateMesonBuild = false,
+		isMesonBuildTemplatePath = false,
+		isExecutePreConfigHook = false,
+		isForce = false;
 	std::string directory;
 	app.add_flag("--version", isPrintVersion, "Prints version number of Build Master");
 	app.add_flag("--update-meson-build", isUpdateMesonBuild, "Regenerates the meson.build script if the build_master.json file is more recent");
 	app.add_flag("--meson-build-template-path", isMesonBuildTemplatePath, "Prints lookup path of meson.build.template, typically this is only for debugging purpose");
+	app.add_flag("--execute-pre-config-hook", isExecutePreConfigHook, "Executes pre_config_hook (shell script) if any");
 	app.add_flag("--force", isForce, "if --update-meson-build flag is present along with this --force then meson.build script is generated even if it is upto date");
 	app.add_option("--directory", directory, "Directory path in which to look for build_master.json, by default it is the current working directory");
 
@@ -914,6 +918,11 @@ int main(int argc, const char* argv[])
 	{
 		spdlog::info("MESON_BUILD_TEMPLATE_PATH: {}", MESON_BUILD_TEMPLATE_PATH);
 		return EXIT_SUCCESS;
+	}
+	if(isExecutePreConfigHook)
+	{
+		if(!RunPreConfigScript(directory))
+			spdlog::info("No pre_config_hook to run");
 	}
 
 	return EXIT_SUCCESS;
