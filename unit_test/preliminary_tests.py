@@ -24,20 +24,6 @@ class PreliminaryTests(test_base.TestBase):
         self.assertIsNone(output.stderr)
         return
 
-    # Geneates meson.build file and Runs meson into the initialized directory to check if the meson.build file is a valid build script
-    def check_meson_build_script(self, directory = None):
-        directory_arg = [f'--directory={directory}'] if directory else []
-        output = self.run_with_args(['--update-meson-build'] + directory_arg)
-        self.assert_return_success(output)
-        self.assertIsNone(output.stderr)
-        output.assert_exists_file(os.path.join(directory if directory else '', 'meson.build'))
-
-        # build_master --directory=<directory> meson setup build
-        output = self.run_with_args(directory_arg + ['meson', 'setup', 'build'])
-        self.assert_return_success(output)
-        self.assertIsNone(output.stderr)
-        return
-
     # Initialize a new project and check if the files exist which are supposed to exist
     def run_test_init(self, is_cpp = False):
         output = self.run_with_args(['init', '--name=MyProject', '--canonical_name=myproject'] + (['--create-cpp'] if is_cpp else []))
