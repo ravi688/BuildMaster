@@ -15,6 +15,7 @@
 #include <CLI/CLI.hpp>
 #include <spdlog/spdlog.h>
 #include <common/defines.hpp> // for com::to_upper()
+#include <invoke/root.hpp> // for root privileges utility functions in invoke namespace
 
 // Stores values of the arguments passed to 'init' command
 // Example: build_master init --name=BufferLib --canonical_name=bufferlib --force
@@ -188,6 +189,21 @@ static void PrintVersionInfo() noexcept
 
 int main(int argc, const char* argv[])
 {
+#ifdef PLATFORM_LINUX
+	// Drop root privileges if the build_master command is executed under root privileges, root privileges need to be used where absolutely necessary,
+	// And any modifications by root should be kept at minimum.
+	if(invoke::HasRootPrivileges())
+	{
+		if(invoke::DropRootPrivileges())
+			spdlog::info("Dropping root privileges");
+		else
+		{
+			spdlog::error("Failed to drop root privileges");
+			exit(EXIT_FAILURE);
+		}
+	}
+#endif // PLATFORM_LINUX
+
 	CLI::App app;
 
 	bool isPrintVersion = false, 
