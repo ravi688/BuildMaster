@@ -22,8 +22,7 @@ git_repos = [
     'https://github.com/ravi688/DiskManager.git',
     'https://github.com/ravi688/BufferLib.git',
     'https://github.com/ravi688/Calltrace.git',
-    'https://github.com/ravi688/MeshLib.git',
-    'https://github.com/ravi688/SKVMOIP.git'
+    'https://github.com/ravi688/MeshLib.git'
 ]
 
 # git clone <url> into <directory>
