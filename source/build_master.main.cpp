@@ -193,8 +193,13 @@ int main(int argc, const char* argv[])
 	// And any modifications by root should be kept at minimum.
 	if(invoke::HasRootPrivileges())
 	{
-		if(!invoke::DropRootPrivileges())
-			throw std::runtime_error("Failed to drop root privileges");
+		if(invoke::DropRootPrivileges())
+			spdlog::info("Dropping root privileges");
+		else
+		{
+			spdlog::error("Failed to drop root privileges");
+			exit(EXIT_FAILURE);
+		}
 	}
 
 	CLI::App app;
