@@ -13,6 +13,7 @@
 
 #include <spdlog/spdlog.h>
 #include <invoke/invoke.hpp>
+#include <invoke/root.hpp>
 
 static constexpr std::string_view gMesonExecutableName = "build_master_meson";
 
@@ -62,7 +63,7 @@ static std::vector<std::string> BuildArgumentsForCmdRun(std::string_view cmdName
 
 // cmdName: Just the name of the command
 // restArgs: The rest of the argumentst which need to be passed to that cmd
-static decltype(auto) RunCmd(std::string_view cmdName, std::string_view workDirectory, const std::vector<std::string>& restArgs)
+static decltype(auto) RunCmd(std::string_view cmdName, std::string_view workDirectory, const std::vector<std::string>& restArgs, bool isRoot)
 {
   	// Prepare arguments
   	std::vector<std::string> finalArgs = BuildArgumentsForCmdRun(cmdName, restArgs);
@@ -70,7 +71,7 @@ static decltype(auto) RunCmd(std::string_view cmdName, std::string_view workDire
   	std::stringstream strstream;
   	strstream << "Command: " << finalArgs << "\n";
   	spdlog::info(strstream.str());
-  	return invoke::Exec(finalArgs, workDirectory);	
+  	return invoke::Exec(finalArgs, workDirectory, isRoot);
 }
 
 // build_master meson
@@ -85,6 +86,13 @@ void InvokeMeson(std::string_view directory, const std::vector<std::string>& arg
 		if(args.size() == 0 || args[0] == "setup")
 			RunPreConfigScript(directory);
 	}
+
+	// Determine if root privileges are required
+	// meson install requires root privileges to be able to install to system directories (owned by root user)
+	bool isRootPrivilegesRequired = args.size() && args[0] == "install";
+	if(isRootPrivilegesRequired && !invoke::HasRootPrivileges())
+		spdlog::info("Root privileges are required for meson's install sub-command");
+
 	// Run the meson command
-  	exit(RunCmd(gMesonExecutableName, directory, args));
+  	exit(RunCmd(gMesonExecutableName, directory, args, isRootPrivilegesRequired));
 }
