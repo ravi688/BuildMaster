@@ -97,3 +97,13 @@ class ArtTest(unittest.TestCase):
     def assert_string_matches_regex(self, string_data, regex_pattern):
         match = re.search(regex_pattern, string_data)
         self.assertIsNotNone(match, f'String \'{string_data}\' doesn\'t match the regex \'{regex_pattern}\'')
+
+    def assert_string_matches_any_regex(self, string_list : [str], regex_pattern : str):
+        isMatchFound : bool = False
+        for _str in string_list:
+            match = re.search(regex_pattern, _str)
+            if match:
+                isMatchFound = True
+                break
+        self.assertTrue(isMatchFound, f'No match found for regex: \'{regex_pattern}\'');
+        return

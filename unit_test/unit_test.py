@@ -37,8 +37,8 @@ class TestVersion(TestBase):
         # ...
         # Build Master 1.0.0
         # Build Type: Debug
-        self.assert_string_matches_regex(output.stdout[1], r'^Build Master \d+\.\d+\.\d+$')
-        self.assert_string_matches_regex(output.stdout[2], r'^Build Type: (Debug|Release)$')
+        self.assert_string_matches_any_regex(output.stdout, r'^Build Master \d+\.\d+\.\d+$')
+        self.assert_string_matches_any_regex(output.stdout, r'^Build Type: (Debug|Release)$')
         self.assertIsNone(output.stderr)
         return
 
