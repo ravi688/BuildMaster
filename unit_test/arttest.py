@@ -73,13 +73,13 @@ class ArtTest(unittest.TestCase):
     def cleanupArtifacts(self):
         delete_all_files_and_dirs(self._working_dir.name)
         return
-  
-    def run_with_args(self, args):
+
+    def run_cmd_with_args(self, executable, args):
         """
         Run the executable with given input and return its output
         """
         process = subprocess.Popen(
-            [self._executable] + args,
+            [executable] + args,
             cwd=self._working_dir.name,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
@@ -93,6 +93,9 @@ class ArtTest(unittest.TestCase):
     def assert_return_success(self, output: ArtOutput):
         self.assertEqual(output.returncode, 0, f'stdout: {output.stdout}\nstderr: {output.stderr}')
         return
+ 
+    def run_with_args(self, args):
+        return self.run_cmd_with_args(self._executable, args)
 
     def assert_string_matches_regex(self, string_data, regex_pattern):
         match = re.search(regex_pattern, string_data)
