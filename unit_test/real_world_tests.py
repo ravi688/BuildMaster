@@ -18,11 +18,12 @@ git_repos = [
     'https://github.com/ravi688/PhyMacParser.git',
     'https://github.com/ravi688/SafeMemory.git',
     'https://github.com/ravi688/Common.git',
-    'https://github.com/ravi688/PlayVk.git',
+    'https://github.com/ravi688/GLSLCommon.git',
     'https://github.com/ravi688/DiskManager.git',
     'https://github.com/ravi688/BufferLib.git',
     'https://github.com/ravi688/Calltrace.git',
-    'https://github.com/ravi688/MeshLib.git'
+    'https://github.com/ravi688/MeshLib.git',
+    'https://github.com/ravi688/ttf2mesh.git'
 ]
 
 # git clone <url> into <directory>
