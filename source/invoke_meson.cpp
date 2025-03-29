@@ -63,7 +63,7 @@ static std::vector<std::string> BuildArgumentsForCmdRun(std::string_view cmdName
 
 // cmdName: Just the name of the command
 // restArgs: The rest of the argumentst which need to be passed to that cmd
-static decltype(auto) RunCmd(std::string_view cmdName, std::string_view workDirectory, const std::vector<std::string>& restArgs, bool isRoot)
+static decltype(auto) RunCmd(std::string_view cmdName, std::string_view workDirectory, const std::vector<std::string>& restArgs, bool isRoot = false)
 {
   	// Prepare arguments
   	std::vector<std::string> finalArgs = BuildArgumentsForCmdRun(cmdName, restArgs);
@@ -87,12 +87,16 @@ void InvokeMeson(std::string_view directory, const std::vector<std::string>& arg
 			RunPreConfigScript(directory);
 	}
 
+#ifdef PLATFORM_LINUX
 	// Determine if root privileges are required
 	// meson install requires root privileges to be able to install to system directories (owned by root user)
 	bool isRootPrivilegesRequired = args.size() && args[0] == "install";
 	if(isRootPrivilegesRequired && !invoke::HasRootPrivileges())
 		spdlog::info("Root privileges are required for meson's install sub-command");
-
 	// Run the meson command
   	exit(RunCmd(gMesonExecutableName, directory, args, isRootPrivilegesRequired));
+#else // PLATFORM_LINUX
+	// Run the meson command
+  	exit(RunCmd(gMesonExecutableName, directory, args));
+#endif // otherwise platforms
 }

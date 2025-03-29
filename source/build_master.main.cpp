@@ -189,6 +189,7 @@ static void PrintVersionInfo() noexcept
 
 int main(int argc, const char* argv[])
 {
+#ifdef PLATFORM_LINUX
 	// Drop root privileges if the build_master command is executed under root privileges, root privileges need to be used where absolutely necessary,
 	// And any modifications by root should be kept at minimum.
 	if(invoke::HasRootPrivileges())
@@ -201,6 +202,7 @@ int main(int argc, const char* argv[])
 			exit(EXIT_FAILURE);
 		}
 	}
+#endif // PLATFORM_LINUX
 
 	CLI::App app;
 
