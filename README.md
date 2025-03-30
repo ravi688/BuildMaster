@@ -411,6 +411,42 @@ meson wrap install vulkan-headers
 > The pre-config hook script executs everytime `meson setup` command is executed via `build_master`.
 > Therefore, make sure the result/behaviour of the script is idempotent, i.e. if the script is executed multiple times then it should lead to the same result as if it ran only once.
 
+### Pre-config hook script under root privileges
+To install apt packages on Linux platforms, you might need root privileges. For that you'll need another bash script and hook it to build_master's pre-config event which will be executed under root privileges.
+#### Usage Example
+```cpp
+{
+    "project_name" : "PlayVk",
+    "canonical_name" : "playvk",
+    "description" : "Single header file library for simplifying vulkan",
+    "dependencies" : [ "common", "glfw3", "vulkanheaders" ],
+    "release_defines": [ "-DPVK_RELEASE" ],
+    "debug_defines": [ "-DPVK_DEBUG" ],
+    "install_header_dirs" : [ "include/PlayVk" ],
+    "include_dirs" : [ "include" ],
+    "pre_config_hook" : "install_meson_wraps.sh",
+    "pre_config_root_hook" : "install_dependencies.root.sh", // <--- here
+...
+}
+```
+File: `install_dependencies.root.sh`
+```sh
+#! /bin/bash
+
+if [[ "$OSTYPE" == "linux-gnu" ]]; then
+	sudo apt-get -y install x11-xserver-utils
+	sudo apt-get -y install libxrandr-dev
+	sudo apt-get -y install libxinerama-dev
+	sudo apt-get -y install libxcursor-dev
+	sudo apt-get -y install libxi-dev
+	sudo apt-get -y install libxkbcommon-dev
+	sudo apt-get -y install libgl-dev
+fi
+```
+**Real world example**: [PlayVk](https://github.com/ravi688/PlayVk.git) 
+> [!Note]
+> If `build_master` isn't executed with `sudo` and then human interaction may be required to provide the credentials while (re)configuring the project which contains `pre_config_root_hook` in its `build_master.json` file
+
 ### Targets
 The following boolean config vars can only be specified in `target` context in `build_master.json`, And only one of them can exist in a target. That means all of them are mutually exclusive. 
 | Target Type | Description
