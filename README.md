@@ -5,9 +5,7 @@
 ![GitHub stars](https://img.shields.io/github/stars/ravi688/BuildMaster?style=social)
 ![GitHub stars](https://img.shields.io/github/forks/ravi688/BuildMaster?style=social)
 [![GitHub stars](https://img.shields.io/github/issues/ravi688/BuildMaster?style=social)](https://github.com/ravi688/BuildMaster/issues)  
-[![Join Us on Discord](https://img.shields.io/badge/Join%20us%20on-Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/zJ7PvwMs5G)
-
-<br>
+[![Join Us on Discord](https://img.shields.io/badge/Join%20us%20on-Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/zJ7PvwMs5G)  
 | OS | Build Status |
 |----|-------- |
 | Linux | [![Linux Release Mode Unit Tests](https://github.com/ravi688/BuildMaster/actions/workflows/release_unit_test.yml/badge.svg)](https://github.com/ravi688/BuildMaster/actions/workflows/release_unit_test.yml) |
