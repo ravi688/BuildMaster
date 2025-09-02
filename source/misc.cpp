@@ -3,6 +3,8 @@
 #include <iostream>
 #include <filesystem>
 
+#include <spdlog/spdlog.h>
+
 std::string LoadTextFile(std::string_view filePath)
 {
 	std::ifstream stream(filePath.data());
@@ -35,4 +37,22 @@ static constexpr std::string_view gBuildMasterJsonFilePath = "build_master.json"
 std::string GetBuildMasterJsonFilePath(std::string_view directory)
 {
 	return GetPathStrRelativeToDir(directory, gBuildMasterJsonFilePath);
+}
+
+std::string SelectPath(const std::vector<std::string>& paths)
+{
+	#ifdef _WIN32
+		// First try mingw
+		for(const auto& path : paths)
+			if(path.find("mingw") != std::string::npos)
+				return path;
+		// Then fallback to msys
+		for(const auto& path : paths)
+			if(path.find("msys") != std::string::npos)
+				return path;
+		spdlog::error("Couldn't find mingw or msys equivalent executable path");
+		exit(EXIT_FAILURE);
+	#else
+		return paths[0];
+	#endif
 }

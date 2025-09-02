@@ -1,5 +1,6 @@
 #include <build_master/pre_config_script.hpp>
 #include <build_master/json_parse.hpp> // for ParseBuildMasterJson(), and GetJsonKeyValueOrNull<>()
+#include <build_master/misc.hpp> // for SelectPath()
 
 #include <spdlog/spdlog.h>
 #include <invoke/invoke.hpp>
@@ -12,7 +13,14 @@ static std::optional<bool> RunPreConfigScript(const json& buildMasterJson, std::
 	if(auto result = GetJsonKeyValueOrNull<std::string>(buildMasterJson, hookName); result.has_value())
 	{
 		spdlog::info(logMsg);
-		auto returnCode = invoke::Exec({ std::string { gBash }, result.value() }, directory, isRoot);
+		std::optional<std::vector<std::string>> bashPaths = invoke::GetExecutablePaths(gBash);
+		if(!bashPaths)
+		{
+			spdlog::error("No path found for {}", gBash);
+			exit(EXIT_FAILURE);
+		}
+		std::string bashPath = SelectPath(bashPaths.value()); 
+		auto returnCode = invoke::Exec({ bashPath, result.value() }, directory, isRoot);
 		return { returnCode == 0 };
 	}
 	return { };

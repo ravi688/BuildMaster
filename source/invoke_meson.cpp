@@ -1,5 +1,6 @@
 #include <build_master/meson_build_gen.hpp>
 #include <build_master/pre_config_script.hpp>
+#include <build_master/misc.hpp> // for SelectPath()
 
 #include <iostream>
 #include <cstdlib>
@@ -22,24 +23,6 @@ static std::ostream& operator<<(std::ostream& stream, const std::vector<std::str
 	for(const auto& value : v)
 		stream << value << " ";
 	return stream;
-}
-
-static std::string SelectPath(const std::vector<std::string>& paths)
-{
-	#ifdef _WIN32
-		// First try mingw
-		for(const auto& path : paths)
-			if(path.find("mingw") != std::string::npos)
-				return path;
-		// Then fallback to msys
-		for(const auto& path : paths)
-			if(path.find("msys") != std::string::npos)
-				return path;
-		spdlog::error("Couldn't find mingw or msys equivalent executable path");
-		exit(EXIT_FAILURE);
-	#else
-		return paths[0];
-	#endif
 }
 
 // cmdName: name of the command (not the full path, just the name)
