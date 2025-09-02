@@ -37,7 +37,7 @@ I started this project to integrate frequently occuring **Build Configurations**
 #### Install some dependencies
 For Msys2/MINGW64 (windows)
 ```
-pacman -S mingw-w64-x86_64-python mingw-w64-x86_64-python-pip mingw-w64-x86_64-cmake mingw-w64-x86_64-spdlog
+pacman -S mingw-w64-x86_64-gcc mingw-w64-x86_64-python mingw-w64-x86_64-python-pip mingw-w64-x86_64-cmake mingw-w64-x86_64-spdlog
 ```
 For Linux
 ```
