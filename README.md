@@ -32,6 +32,7 @@ I started this project to integrate frequently occuring **Build Configurations**
 - [ ] Single command packaging and bundling for popular package managers (apt, dpkg, pacman, rpm), and window installers (.msi and .exe)
 - [ ] Github/Gitlab workflow generation for Building the project in different environments on different platforms each
 - [ ] Distributed project building for large number of source files to compile, C++ takes more time to compile so this feature is particularly beneficial for C++ projects
+- [ ] CmakeLists.txt generation
 
 ## Building and Installing
 #### Install some dependencies
