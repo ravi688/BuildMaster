@@ -15,7 +15,7 @@ else
         }
 
         # Detect if we are running on docker container
-        if is_in_docker; then
+        if is_in_docker || [ -z "${SUDO_USER-}"; then
                 NO_ROOT=""
         else
                 NO_ROOT="sudo -u $SUDO_USER"
