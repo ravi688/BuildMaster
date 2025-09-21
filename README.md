@@ -51,6 +51,7 @@ git clone https://github.com/ravi688/BuildMaster.git
 #### Run install script
 For Msys2/MINGW64 (windows)
 ```
+./install_dependencies.sh
 ./install_build_master.sh
 ```
 > [!Note]
@@ -58,6 +59,7 @@ For Msys2/MINGW64 (windows)
 
 For Linux
 ```
+sudo ./install_dependencies.sh
 sudo ./install_build_master.sh
 ```
 > [!Note]
