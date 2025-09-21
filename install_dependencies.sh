@@ -26,6 +26,6 @@ else
 	apt-get install -y python-is-python3
 	apt-get install -y libspdlog-dev
 	apt-get install -y python3-pip
-	apt-get install -y pkgconfig
+	apt-get install -y pkgconf
 
 fi
