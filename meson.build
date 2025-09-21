@@ -89,12 +89,22 @@ if os_name == 'windows'
 	extra_link_args += '-lws2_32'
 endif
 
+compiler_linker_args = [ ]
+if host_machine.cpu_family() == 'x86' or host_machine.cpu_family() == 'x86_64'
+  message('Building for x86')
+  compiler_linker_args = [ '-m64' ]
+elif host_machine.cpu_family().startswith('arm') or host_machine.cpu_family() == 'aarch64'
+  message('Building for ARM')
+else
+  message('Unknown architecture: ' + host_machine.cpu_family())
+endif
+
 # Compiler configuration
-add_project_arguments('-m64', language : 'c')
-add_project_arguments('-m64', language : 'cpp')
+add_project_arguments(compiler_linker_args, language : 'c')
+add_project_arguments(compiler_linker_args, language : 'cpp')
 # Linker configuration
-add_project_link_arguments('-m64', extra_link_args, language : 'c')
-add_project_link_arguments('-m64', extra_link_args, language : 'cpp')
+add_project_link_arguments(compiler_linker_args, extra_link_args, language : 'c')
+add_project_link_arguments(compiler_linker_args, extra_link_args, language : 'cpp')
 
 # Build type specific defines
 if get_option('buildtype') == 'release'
