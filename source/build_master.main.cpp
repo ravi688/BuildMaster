@@ -194,13 +194,9 @@ int main(int argc, const char* argv[])
 	// And any modifications by root should be kept at minimum.
 	if(invoke::HasRootPrivileges())
 	{
+		spdlog::info("Running as root");
 		if(invoke::DropRootPrivileges())
-			spdlog::info("Dropping root privileges");
-		else
-		{
-			spdlog::error("Failed to drop root privileges");
-			exit(EXIT_FAILURE);
-		}
+			spdlog::warn("Dropped root privileges");
 	}
 #endif // PLATFORM_LINUX
 
