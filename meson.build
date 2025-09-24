@@ -18,7 +18,7 @@
 # -------------------------------- PROJECT CONFIGS -----------------------------
 
 project('BuildMaster', 'c', 'cpp',
-  version : '1.0.0',
+  version : '1.4.5',
   meson_version: '>=1.1',
   default_options : [
     'warning_level=3',
