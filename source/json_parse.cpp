@@ -50,3 +50,12 @@ json ParseBuildMasterJson(std::string_view directory)
 	json data = json::parse(jsonStr);
 	return data;
 }
+
+
+template<>
+std::optional<json> GetJsonKeyValueOrNull<json>(const json& jsonObj, std::string_view key)
+{
+	if(auto it = jsonObj.find(key); it != jsonObj.end())
+		return { it.value() };
+	return { };
+}

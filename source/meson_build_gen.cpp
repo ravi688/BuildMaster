@@ -248,6 +248,11 @@ static void ProcessTarget(const json& targetJson,
 			stream << std::format(",\n\tcpp_args: {}{} + project_build_mode_defines_bm_internal__", name, suffixData.buildDefines);
 		}
 		stream << std::format(", \n\tlink_args: {}{}[host_machine.system()]", name, suffixData.linkArgs);
+		if(auto listJson = GetJsonKeyValueOrNull<json>(targetJson, "link_with"))
+		{
+			stream << ", \n\tlink_with: ";
+			ProcessStringList(listJson.value(), stream);
+		}
 		stream << ",\n\tgnu_symbol_visibility: 'hidden'";
 		stream << "\n)\n";
 	}
