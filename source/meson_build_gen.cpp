@@ -87,12 +87,12 @@ static std::string ApplyMetaInfo(std::string_view str)
 	return copyStr;
 }
 
-static void ProcessStringListElements(const json& jsonObj, std::ostringstream& stream, std::string_view delimit = " ", std::optional<TokenTransformCallback> callback = { })
+static void ProcessStringListElements(const json& jsonObj, std::ostringstream& stream, std::string_view delimit = " ", std::optional<TokenTransformCallback> callback = { }, bool isMetaInfo = true)
 {
 	for(std::size_t i = 0; const auto& value : jsonObj)
 	{
 		const auto& str = value.template get<std::string>();
-		std::string token = ApplyMetaInfo(str);
+		std::string token = isMetaInfo ? ApplyMetaInfo(str) : str;
 		if(callback)
 			token = (*callback)(token);
 		stream << token;
@@ -101,12 +101,12 @@ static void ProcessStringListElements(const json& jsonObj, std::ostringstream& s
 	}
 }
 
-static void ProcessStringListElements(const json& jsonObj, std::string_view keyName, std::ostringstream& stream, std::string_view delimit = " ", std::optional<TokenTransformCallback> callback = { })
+static void ProcessStringListElements(const json& jsonObj, std::string_view keyName, std::ostringstream& stream, std::string_view delimit = " ", std::optional<TokenTransformCallback> callback = { }, bool isMetaInfo = true)
 {
 	auto it = jsonObj.find(keyName);
 	if(it == jsonObj.end())
 		return;
-	ProcessStringListElements(it.value(), stream, delimit, callback);
+	ProcessStringListElements(it.value(), stream, delimit, callback, isMetaInfo);
 }
 
 static std::string GetListStringOrEmpty(const json& jsonObj, std::string_view keyName, std::string_view delimit = " ")
@@ -165,18 +165,18 @@ static TargetType DetectTargetType(const json& targetJson)
 	return TargetType::Executable;
 }
 
-static void ProcessStringList(const json& jsonObj, std::ostringstream& stream, std::string_view delimit = " ", std::optional<TokenTransformCallback> callback = { })
+static void ProcessStringList(const json& jsonObj, std::ostringstream& stream, std::string_view delimit = " ", std::optional<TokenTransformCallback> callback = { }, bool isMetaInfo = true)
 {
 	stream << "[\n";
-	ProcessStringListElements(jsonObj, stream, delimit, callback);
+	ProcessStringListElements(jsonObj, stream, delimit, callback, isMetaInfo);
 	stream << "\n";
 	stream << "]\n";
 }
 
-static void ProcessStringList(const json& jsonObj, std::string_view keyName, std::ostringstream& stream, std::string_view delimit = " ", std::optional<TokenTransformCallback> callback = { })
+static void ProcessStringList(const json& jsonObj, std::string_view keyName, std::ostringstream& stream, std::string_view delimit = " ", std::optional<TokenTransformCallback> callback = { }, bool isMetaInfo = true)
 {
 	stream << "[\n";
-	ProcessStringListElements(jsonObj, keyName, stream, delimit, callback);
+	ProcessStringListElements(jsonObj, keyName, stream, delimit, callback, isMetaInfo);
 	stream << "\n";
 	stream << "]\n";
 }
@@ -248,6 +248,11 @@ static void ProcessTarget(const json& targetJson,
 			stream << std::format(",\n\tcpp_args: {}{} + project_build_mode_defines_bm_internal__", name, suffixData.buildDefines);
 		}
 		stream << std::format(", \n\tlink_args: {}{}[host_machine.system()]", name, suffixData.linkArgs);
+		if(auto listJson = GetJsonKeyValueOrNull<json>(targetJson, "link_with"))
+		{
+			stream << ", \n\tlink_with: ";
+			ProcessStringList(listJson.value(), stream, " ", { }, false);
+		}
 		stream << ",\n\tgnu_symbol_visibility: 'hidden'";
 		stream << "\n)\n";
 	}

@@ -12,15 +12,18 @@ using json = nlohmann::ordered_json;
 json ParseBuildMasterJson(std::string_view directory);
 
 template<typename T>
-static std::optional<T> GetJsonKeyValueOrNull(const json& jsonObj, std::string_view key)
+std::optional<T> GetJsonKeyValueOrNull(const json& jsonObj, std::string_view key)
 {
 	if(auto it = jsonObj.find(key); it != jsonObj.end())
 		return { it.value().template get<T>() };
 	return { };
 }
 
+template<>
+std::optional<json> GetJsonKeyValueOrNull<json>(const json& jsonObj, std::string_view key);
+
 template<typename T>
-static T GetJsonKeyValue(const json& jsonObj, std::string_view key, std::optional<T> defaultValue = {})
+T GetJsonKeyValue(const json& jsonObj, std::string_view key, std::optional<T> defaultValue = {})
 {
 	if(auto result = GetJsonKeyValueOrNull<T>(jsonObj, key); result.has_value())
 		return result.value();
