@@ -55,7 +55,10 @@ endif
 
 meson_build_template_install_dir = join_paths(dest_dir, get_option('datadir'), 'build_master')
 
+git_commit_id = run_command('git', 'rev-parse', 'HEAD', check : true).stdout().strip()
+
 defines = [
+  '-DGIT_COMMIT_ID="' + git_commit_id + '"',
   '-DBUILDMASTER_VERSION_MAJOR=' + meson.project_version().split('.')[0],
   '-DBUILDMASTER_VERSION_MINOR=' + meson.project_version().split('.')[1],
   '-DBUILDMASTER_VERSION_MICRO=' + meson.project_version().split('.')[2], 

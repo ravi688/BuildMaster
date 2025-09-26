@@ -185,6 +185,7 @@ static void PrintVersionInfo() noexcept
 	#else
 		std::cout << "Build Type: Debug\n";
 	#endif
+	std::cout << "Git Commit ID: " << GIT_COMMIT_ID << "\n";
 }
 
 int main(int argc, const char* argv[])
