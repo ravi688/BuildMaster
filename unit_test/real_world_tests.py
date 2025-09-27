@@ -23,7 +23,8 @@ git_repos = [
     'https://github.com/ravi688/BufferLib.git',
     'https://github.com/ravi688/Calltrace.git',
     'https://github.com/ravi688/MeshLib.git',
-    'https://github.com/ravi688/ttf2mesh.git'
+    'https://github.com/ravi688/ttf2mesh.git',
+    'https://github.com/ravi688/NetSocket.git'
 ]
 
 # git clone <url> into <directory>
