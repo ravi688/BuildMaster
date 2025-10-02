@@ -372,9 +372,13 @@ The above command prints version and build mode information on stdout.
 | `windows_link_args` | list of string(s) | It is optional, but useful for specifying window specific libraries
 | `linux_link_args` | list of string(s) | It is optioanl, but useful for specifying linux specific libraries
 | `darwin_link_args` | list of string(s) | It is optional, but useful for specifying darwin (macOS) sepcific libraries
+| `windows_sources` | list of string(s) | It is optional, but useful for specifying windows specific sources files, i.e. the source files which only contain code related to Windows API.
+| `linux_sources` | list of string(s) | It is optional, but useful for specifying linux specific source files, i.e. the source files which contain linux only code.
+| `drawin_sources` | list of string(s) | It is optiona, but useful for specyfing drawin (macOS) specific source files, i.e. the source files which contain macOS only code.
 | `dependencies` | list of string(s) | It is optional, it can be used in project scope or in target context both, if used in target context then the specified dependencies will only be applicable to that target only
 | `include_dirs` | list of string(s) | It is optional in the context of target, When specified in a target context then these include directories are only used for that target and won't affect other targets
 | `sub_dirs` | list of string(s) | It is optional, and can only be used in header only library target context. It specifies the list of sub-directories containing header file which needs to be exported via pkg-config package file.
+| `link_with` | list of string(s), i.e. names of library targets to link against | It is optional, it useful in the case when you don't want to compile the source files mutliple times for each target, instead you compile a static library and link against each executable target.
 
 ### Pre Configure Script Execution
 Different projects have different dependencies, and some require execution of complex commands to build and install such dependencies.
