@@ -28,6 +28,8 @@ else
 	BUILD_TYPE="release"
 fi
 
+./install_dependencies.sh
+
 if ./install_meson.sh; then
 	if [[ "$PLATFORM" == "MINGW" ]]; then
 		(build_master_meson setup build --reconfigure --buildtype=$BUILD_TYPE && \
