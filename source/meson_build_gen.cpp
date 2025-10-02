@@ -211,9 +211,10 @@ struct VarSuffixData
 	std::string_view sources;
 	std::string_view dependencies;
 	std::string_view linkArgs;
+	std::string_view includeDirs;
+	std::string_view platformSpecificSources;
 	std::string_view buildDefines;
 	std::string_view useDefines;
-	std::string_view includeDirs;
 };
 
 static void ProcessTarget(const json& targetJson, 
@@ -230,7 +231,7 @@ static void ProcessTarget(const json& targetJson,
 	{
 		std::string_view targetTypeStr = GetTargetTypeStr(targetType);
 		stream << std::format("{} = {}('{}'", name, targetTypeStr, name);
-		stream << std::format(",\n\t{}{} + sources_bm_internal__", name, suffixData.sources);
+		stream << std::format(",\n\t{}{} + {}{}[host_machine.system()] + sources_bm_internal__", name, suffixData.sources, name, suffixData.platformSpecificSources);
 		stream << std::format(",\n\tdependencies: dependencies_bm_internal__ + {}{}", name, suffixData.dependencies);
 		// NOTE: include_directies([...]) + include_directories([...]) is not possible in meson
 		// So we need to use arrays to combine them
@@ -313,6 +314,7 @@ static void ProcessTargetJson(const json& targetJson, std::ostringstream& stream
 	suffixData.dependencies = "_dependencies_bm_internal__";
 	suffixData.linkArgs = "_link_args_bm_internal__";
 	suffixData.includeDirs = "_include_dirs_bm_internal__";
+	suffixData.platformSpecificSources = "_platform_src_bm_internal__";
 	ProcessStringListDeclare(targetJson, stream, "sources", suffixData.sources);
 	ProcessStringListDeclare(targetJson, stream, "include_dirs", suffixData.includeDirs);
 	ProcessStringListDeclare(targetJson, stream, "dependencies", suffixData.dependencies, [](std::string_view quotedToken) -> std::string
@@ -325,6 +327,12 @@ static void ProcessTargetJson(const json& targetJson, std::ostringstream& stream
 			{ "linux", "linux_link_args" },
 			{ "darwin", "darwin_link_args" }
 		}, suffixData.linkArgs);
+	ProcessStringListDictDeclare(targetJson, stream,
+		{
+			{ "windows", "windows_sources" },
+			{ "linux", "linux_sources" },
+			{ "darwin", "darwin_sources" }
+		}, suffixData.platformSpecificSources);
 	TargetType targetType = DetectTargetType(targetJson);
 	if(targetType == TargetType::Executable)
 	{
@@ -357,6 +365,9 @@ static constexpr std::pair<std::string_view, std::string_view> gPlaceHolderToJso
 	{ "$$debug_defines$$", "debug_defines" },
 	{ "$$defines$$", "defines" },
 	{ "$$sources$$", "sources" },
+	{ "$$windows_sources$$", "windows_sources" },
+	{ "$$linux_sources$$", "linux_sources" },
+	{ "$$darwin_sources$$", "darwin_sources" },
 	{ "$$include_dirs$$", "include_dirs" },
 	{ "$$windows_link_args$$", "windows_link_args" },
 	{ "$$linux_link_args$$", "linux_link_args" },
