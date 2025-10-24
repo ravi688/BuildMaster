@@ -15,6 +15,7 @@
 #include <CLI/CLI.hpp>
 #include <spdlog/spdlog.h>
 #include <common/defines.hpp> // for com::to_upper()
+#include <common/StringUtility.hpp> // for com::string_join()
 #include <invoke/root.hpp> // for root privileges utility functions in invoke namespace
 
 // Stores values of the arguments passed to 'init' command
@@ -74,25 +75,36 @@ using namespace std::literals;
 // source/main.cpp
 static void GenerateSeedFiles(const ProjectInitCommandArgs& args)
 {
-	constexpr std::string_view mainSourceInitData[2] = {
+	constexpr std::string_view cppMainSourceInitDataTemplate =
 R"(
+#include <{0}/defines.hpp>
 #include <iostream>
 
 int main()
-{
-	std::cout << "Hello World";
+{{
+	#ifdef {1}_DEBUG
+		std::cout << "Build mode: Debug" << std::endl;
+	#else // {1}_DEBUG
+		std::cout << "Build mode: Release" << std::endl;
+	#endif // {1}_RELEASE
 	return 0;
-}
-)",
+}}
+)";
+	constexpr std::string_view cMainSourceInitDataTemplate =
 R"(
+#include <{0}/defines.h>
 #include <stdio.h>
 
 int main()
-{
-	puts("Hello World");
+{{
+	#ifdef {1}_DEBUG
+		puts("Build mode: Debug");
+	#else // {1}_DEBUG
+		puts("Build mode: Release");
+	#endif // {1}_RELEASE
 	return 0;
-}
-)" };
+}}
+)";
 	constexpr std::string_view apiDefinesInitTemplate =
 R"(
 #pragma once
@@ -134,13 +146,15 @@ R"(
 	auto includeDir = std::filesystem::path(args.directory) / "include"sv / args.canonicalName;
 	if(args.isCreateCpp)
 	{
-		CreateFile(sourceDir / "main.cpp", mainSourceInitData[0]);
+		std::string cppMainSrc = std::format(cppMainSourceInitDataTemplate, args.canonicalName, canonicalNameUpper);
+		CreateFile(sourceDir / "main.cpp", cppMainSrc);
 		CreateFile(includeDir / "api_defines.hpp", apiDefinesInitData);
 		CreateFile(includeDir / "defines.hpp", definesInitData);
 	}
 	else
 	{
-		CreateFile(sourceDir / "main.c", mainSourceInitData[1]);
+		std::string cMainSrc = std::format(cMainSourceInitDataTemplate, args.canonicalName, canonicalNameUpper);
+		CreateFile(sourceDir / "main.c", cMainSrc);
 		CreateFile(includeDir / "api_defines.h", apiDefinesInitData);
 		CreateFile(includeDir / "defines.h", definesInitData);
 	}
@@ -161,6 +175,8 @@ static void IntializeProject(const ProjectInitCommandArgs& args)
 		{ "project_name" , args.projectName },
 		{ "canonical_name", args.canonicalName },
 		{ "include_dirs", "include" },
+		{ "release_defines", { com::to_upper(com::string_join("-D", args.canonicalName, "_RELEASE")) } },
+		{ "debug_defines", { com::to_upper(com::string_join("-D", args.canonicalName, "_DEBUG")) } },
 		{ "targets",
 			{			
 				{ 
