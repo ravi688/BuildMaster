@@ -59,3 +59,12 @@ std::optional<json> GetJsonKeyValueOrNull<json>(const json& jsonObj, std::string
 		return { it.value() };
 	return { };
 }
+
+bool HasJsonKey(const json& jsonObj, std::string_view key)
+{
+	auto it = jsonObj.find(key);
+	if(it != jsonObj.end())
+		return true;
+	else
+		return false;
+}
