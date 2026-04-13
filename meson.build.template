@@ -129,12 +129,21 @@ os_name_bm_internal__ = host_machine.system()
 if os_name_bm_internal__ == 'windows'
   link_args_bm_internal__ += windows_link_args_bm_internal__
   sources_bm_internal__ += windows_sources_bm_internal__
+  dependencies_bm_internal__ += [ 
+  $$windows_dependencies$$ 
+  ]
 elif os_name_bm_internal__ == 'linux'
   link_args_bm_internal__ += linux_link_args_bm_internal__
   sources_bm_internal__ += linux_sources_bm_internal__
+  dependencies_bm_internal__ += [
+  $$linux_dependencies$$
+  ]
 elif os_name_bm_internal__ == 'darwin'
   link_args_bm_internal__ += darwin_link_args_bm_internal__
   sources_bm_internal__ += darwin_sources_bm_internal__
+  dependencies_bm_internal__ += [
+  $$darwin_dependencies$$
+  ]
 endif
 add_project_link_arguments(project_compile_link_args_bm_internal__, link_args_bm_internal__, language : 'c')
 add_project_link_arguments(project_compile_link_args_bm_internal__, link_args_bm_internal__, language : 'cpp')

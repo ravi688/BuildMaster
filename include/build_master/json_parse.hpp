@@ -19,6 +19,8 @@ std::optional<T> GetJsonKeyValueOrNull(const json& jsonObj, std::string_view key
 	return { };
 }
 
+bool HasJsonKey(const json& jsonObj, std::string_view key);
+
 template<>
 std::optional<json> GetJsonKeyValueOrNull<json>(const json& jsonObj, std::string_view key);
 

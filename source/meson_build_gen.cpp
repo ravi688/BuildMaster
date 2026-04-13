@@ -14,6 +14,8 @@
 
 #include <spdlog/spdlog.h>
 
+#include <common/StringUtility.hpp> // for com::string_join()
+
 static constexpr std::string_view gMesonBuildScriptFilePath = "meson.build";
 
 // Use this function whenever you meant to get gMesonBuildScriptFilePath.
@@ -109,10 +111,10 @@ static void ProcessStringListElements(const json& jsonObj, std::string_view keyN
 	ProcessStringListElements(it.value(), stream, delimit, callback, isMetaInfo);
 }
 
-static std::string GetListStringOrEmpty(const json& jsonObj, std::string_view keyName, std::string_view delimit = " ")
+static std::string GetListStringOrEmpty(const json& jsonObj, std::string_view keyName, std::string_view delimit = " ", std::optional<TokenTransformCallback> callback = { })
 {
 	std::ostringstream stream;
-	ProcessStringListElements(jsonObj, keyName, stream, delimit);
+	ProcessStringListElements(jsonObj, keyName, stream, delimit, callback);
 	return stream.str();
 }
 
@@ -181,11 +183,53 @@ static void ProcessStringList(const json& jsonObj, std::string_view keyName, std
 	stream << "]\n";
 }
 
+static std::vector<std::string_view> gPlatformNames = 
+{
+	"windows",
+	"linux",
+	"darwin"
+};
+
 static void ProcessStringListDeclare(const json& targetJson, std::ostringstream& stream, std::string_view listName, std::string_view suffix, std::optional<TokenTransformCallback> callback = { })
 {
 	std::string name = GetJsonKeyValue<std::string>(targetJson, "name");
-	stream << name << suffix << " = ";
+	auto suffixedListName = com::string_join(name, suffix);
+	stream << suffixedListName << " = ";
 	ProcessStringList(targetJson, listName, stream, "\n", callback);
+
+	// Generate platform specific code
+	// It should be as follows:
+	// --------------------------------
+	// if os_name_bm_internal__ == 'windows'
+	// 	main_dependencies_bm_internal__ += [
+	// dependency('mywindowsdep1')
+	// ]
+	// elif os_name_bm_internal__ == 'linux'
+	//	main_dependencies_bm_internal__ += [
+	// dependency('mylinuxdep1'),
+	// dependency('mylinuxdep2')
+	// ]
+	// endif
+	bool ifStarted = false;
+	for(const auto& platformName : gPlatformNames)
+	{
+		auto platformSpecificListName = com::string_join(platformName, "_", listName);
+		if(HasJsonKey(targetJson, platformSpecificListName))
+		{
+			if(ifStarted)
+				stream << "elif";
+			else
+			{
+				stream << "if";
+				ifStarted = true;
+			}
+			stream << " os_name_bm_internal__ == " << single_quoted_str(platformName) << "\n";
+			stream << "\t" << suffixedListName << " += ";
+			ProcessStringList(targetJson, platformSpecificListName, stream, "\n", callback);
+		}
+	}
+	if(ifStarted)
+		stream << "endif\n";
 }
 
 static constexpr std::string_view GetTargetTypeStr(TargetType targetType)
@@ -287,24 +331,29 @@ static void ProcessTarget(const json& targetJson,
 	}
 }
 
-static void ProcessStringListDict(const json& jsonObj, const std::vector<std::pair<std::string_view, std::string_view>>& jsonKeys, std::ostringstream& stream, const std::string_view delimit = " ")
+static void ProcessStringListDict(const json& jsonObj, const std::vector<std::pair<std::string_view, std::string_view>>& jsonKeys, std::ostringstream& stream, const std::string_view delimit = " ", std::optional<TokenTransformCallback> callback = { })
 {
 	for(std::size_t i = 0; const auto& key : jsonKeys)
 	{
-		stream << std::format("'{}' : [{}]", key.first, GetListStringOrEmpty(jsonObj, key.second));
+		stream << std::format("'{}' : [{}]", key.first, GetListStringOrEmpty(jsonObj, key.second, " ", callback));
 		if(++i < jsonKeys.size())
 			stream << "," << delimit;
 	}
 }
 
-static void ProcessStringListDictDeclare(const json& targetJson, std::ostringstream& stream, const std::vector<std::pair<std::string_view, std::string_view>>& jsonKeys, const std::string_view suffix)
+static void ProcessStringListDictDeclare(const json& targetJson, std::ostringstream& stream, const std::vector<std::pair<std::string_view, std::string_view>>& jsonKeys, const std::string_view suffix, std::optional<TokenTransformCallback> callback = { })
 {
 	std::string name = GetJsonKeyValue<std::string>(targetJson, "name");
 	stream << name << suffix << " = {\n";
-	ProcessStringListDict(targetJson, jsonKeys, stream, "\n");
+	ProcessStringListDict(targetJson, jsonKeys, stream, "\n", callback);
 	stream << "\n";
 	stream << "}\n";
 }
+
+static auto gDependencySyntaxAdjust = [](std::string_view quotedToken) -> std::string
+{
+	return std::format("dependency({})", quotedToken);
+};
 
 static void ProcessTargetJson(const json& targetJson, std::ostringstream& stream, ProjectMetaInfo& projMetaInfo)
 {
@@ -317,10 +366,7 @@ static void ProcessTargetJson(const json& targetJson, std::ostringstream& stream
 	suffixData.platformSpecificSources = "_platform_src_bm_internal__";
 	ProcessStringListDeclare(targetJson, stream, "sources", suffixData.sources);
 	ProcessStringListDeclare(targetJson, stream, "include_dirs", suffixData.includeDirs);
-	ProcessStringListDeclare(targetJson, stream, "dependencies", suffixData.dependencies, [](std::string_view quotedToken) -> std::string
-	{
-		return std::format("dependency({})", quotedToken);
-	});
+	ProcessStringListDeclare(targetJson, stream, "dependencies", suffixData.dependencies, gDependencySyntaxAdjust);
 	ProcessStringListDictDeclare(targetJson, stream, 
 		{ 
 			{ "windows", "windows_link_args" },
@@ -351,11 +397,11 @@ static void ProcessTargetJson(const json& targetJson, std::ostringstream& stream
 	}
 }
 
-static void SubstitutePlaceholderJson(std::string& str, const json& jsonObj, const std::string_view placeholderName, const std::string_view jsonKey)
+static void SubstitutePlaceholderJson(std::string& str, const json& jsonObj, const std::string_view placeholderName, const std::string_view jsonKey, std::optional<TokenTransformCallback> callback = { })
 {
-	SubstitutePlaceholder(str, placeholderName, [&jsonObj, &jsonKey]()
+	SubstitutePlaceholder(str, placeholderName, [&jsonObj, &jsonKey, &callback]()
 	{
-		return GetListStringOrEmpty(jsonObj, jsonKey);
+		return GetListStringOrEmpty(jsonObj, jsonKey, " ", callback);
 	});
 }
 
@@ -374,6 +420,13 @@ static constexpr std::pair<std::string_view, std::string_view> gPlaceHolderToJso
 	{ "$$darwin_link_args$$", "darwin_link_args" }
 };
 
+static constexpr std::pair<std::string_view, std::string_view> gDepPlaceHolderToJsonKeyMappings[] =
+{
+	{ "$$windows_dependencies$$", "windows_dependencies" },
+	{ "$$linux_dependencies$$", "linux_dependencies" },
+	{ "$$darwin_dependencies$$", "darwin_dependencies" }
+};
+
 static std::string ProcessTemplate(std::string_view templateStr, const json& buildMasterJson)
 {
 	std::string str { templateStr };
@@ -381,6 +434,9 @@ static std::string ProcessTemplate(std::string_view templateStr, const json& bui
 	SubstitutePlaceholder(str, "$$canonical_name$$", single_quoted_str(GetJsonKeyValue<std::string>(buildMasterJson, "canonical_name")));
 	for(const auto& pair : gPlaceHolderToJsonKeyMappings)
 		SubstitutePlaceholderJson(str, buildMasterJson, pair.first, pair.second);
+	// Substitute the platform specific dependencies separately as they also need to be wrapped in 'dependency()' function.
+	for(const auto& pair : gDepPlaceHolderToJsonKeyMappings)
+		SubstitutePlaceholderJson(str, buildMasterJson, pair.first, pair.second, gDependencySyntaxAdjust);
 	SubstitutePlaceholder(str, "$$vars$$", [&buildMasterJson]() -> std::string
 	{
 		auto it = buildMasterJson.find("vars");
