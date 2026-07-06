@@ -62,4 +62,4 @@ fi
 
 
 # ---------------- Install build_master_meson ----------------------
-(cd $CLONE_PATH && ./yocto_install.sh)
+(cd $CLONE_PATH && ./yocto-install.sh)
