@@ -34,14 +34,16 @@ fi
 
 ./install_dependencies.sh
 
-if ./install_meson.sh; then
+MESON_CMD="$DSTPATH/bin/build_master_meson"
+
+if INSTALL_PREFIX="$DSTPATH" ./install_meson.sh; then
 	if [[ "$PLATFORM" == "MINGW" ]]; then
-		(build_master_meson setup build --reconfigure --buildtype=$BUILD_TYPE --prefix=$DSTPATH && \
-		build_master_meson compile -C build && \
-		build_master_meson install -C build --skip-subprojects)
+		($MESON_CMD setup build --reconfigure --buildtype=$BUILD_TYPE --prefix=$DSTPATH && \
+		$MESON_CMD compile -C build && \
+		$MESON_CMD install -C build --skip-subprojects)
 	else
-		($NO_ROOT build_master_meson setup build --reconfigure --buildtype=$BUILD_TYPE --prefix=$DSTPATH && \
-		$NO_ROOT build_master_meson compile -C build && \
-		build_master_meson install -C build --skip-subprojects)
+		($NO_ROOT $MESON_CMD setup build --reconfigure --buildtype=$BUILD_TYPE --prefix=$DSTPATH && \
+		$NO_ROOT $MESON_CMD compile -C build && \
+		$MESON_CMD install -C build --skip-subprojects)
 	fi
 fi
