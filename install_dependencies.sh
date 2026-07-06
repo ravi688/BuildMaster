@@ -14,11 +14,6 @@ if [[ "$PLATFORM" == "MINGW" ]]; then
 	 	mingw-w64-x86_64-spdlog \
 	 	mingw-w64-x86_64-python-pip
 else
-
-    if [ "$EUID" -ne 0 ]; then
-        echo "This script must be run as root. Please use sudo."
-    	exit -1
-    fi
 	apt-get update
 	apt-get install -y build-essential
 	apt-get install -y meson cmake

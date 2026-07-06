@@ -2,14 +2,15 @@
 
 PREFIX=${PREFIX:-/usr/local}
 DSTPATH="$DESTDIR$PREFIX"
-mkdir -p "${DSTPATH}"
+mkdir -p "${DSTPATH}/bin"
 
 # Platform detection
 if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" || "$OSTYPE" == "mingw"* ]]; then
         PLATFORM="MINGW"
 else
         PLATFORM="LINUX"
-        if [ "$EUID" -ne 0 ]; then
+        if [[ "$DSTPATH" == "/usr" || "$DSTPATH" == "/usr/*" ]] && [ "$EUID" -ne 0 ]; then
+		echo $DSTPATH
                 echo "This script must be run as root. Please use sudo."
                 exit -1
         fi
@@ -31,8 +32,6 @@ if [ -n "${DEBUG}" ]; then
 else
 	BUILD_TYPE="release"
 fi
-
-./install_dependencies.sh
 
 MESON_CMD="$DSTPATH/bin/build_master_meson"
 

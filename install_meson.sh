@@ -10,7 +10,7 @@ if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" || "$OSTYPE" == "mingw"* ]]; 
         PLATFORM="MINGW"
 else
         PLATFORM="LINUX"
-	if [ "$EUID" -ne 0 ]; then
+	if [[ "$INSTALL_PREFIX" == "/usr/*" || "$INSTALL_PREFIX" == "/usr" ]] && [ "$EUID" -ne 0 ]; then
 		echo "This script must be run as root. Please use sudo."
 		exit -1
 	fi
@@ -62,5 +62,4 @@ fi
 
 
 # ---------------- Install build_master_meson ----------------------
-(cd $CLONE_PATH && chmod +x ./install.sh)
 (cd $CLONE_PATH && ./install.sh)
