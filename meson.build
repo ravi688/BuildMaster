@@ -38,20 +38,7 @@ debug_defines = [
   '-DBUILD_MASTER_DEBUG'
 ]
 
-# Get the value of DESTDIR environment variable (set by the runtime_hook.py in build_master_meson)
-python_result = run_command(find_program('python'), '-c', 'import os; print(os.environ["DESTDIR"])', check : false)
-dest_dir = ''
-if python_result.returncode() == 0
-  str = python_result.stdout()
-  # Unix
-  if str.startswith('/')
-    dest_dir = str.replace(';', ':').split(':')[0]
-  # Windows
-  else
-    dest_dir = str.split(';')[0]
-  endif
-  dest_dir = dest_dir.strip()
-endif
+dest_dir = get_option('prefix')
 
 meson_build_template_install_dir = join_paths(dest_dir, get_option('datadir'), 'build_master')
 

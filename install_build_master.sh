@@ -1,5 +1,9 @@
 #!/bin/bash
 
+PREFIX=${PREFIX:-/usr/local}
+DSTPATH="$DESTDIR$PREFIX"
+mkdir -p "${DSTPATH}"
+
 # Platform detection
 if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" || "$OSTYPE" == "mingw"* ]]; then
         PLATFORM="MINGW"
@@ -32,11 +36,11 @@ fi
 
 if ./install_meson.sh; then
 	if [[ "$PLATFORM" == "MINGW" ]]; then
-		(build_master_meson setup build --reconfigure --buildtype=$BUILD_TYPE && \
+		(build_master_meson setup build --reconfigure --buildtype=$BUILD_TYPE --prefix=$DSTPATH && \
 		build_master_meson compile -C build && \
 		build_master_meson install -C build --skip-subprojects)
 	else
-		($NO_ROOT build_master_meson setup build --reconfigure --buildtype=$BUILD_TYPE && \
+		($NO_ROOT build_master_meson setup build --reconfigure --buildtype=$BUILD_TYPE --prefix=$DSTPATH && \
 		$NO_ROOT build_master_meson compile -C build && \
 		build_master_meson install -C build --skip-subprojects)
 	fi
