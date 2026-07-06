@@ -7,7 +7,7 @@ import os
 
 class TestBase(arttest.ArtTest):
     def __init__(self, *args, **kwargs):
-        super().__init__('build_master', *args, **kwargs)
+        super().__init__('/usr/local/bin/build_master', *args, **kwargs)
         return
 
     def assert_string_matches_regex(self, string_data, regex_pattern):
