@@ -221,13 +221,11 @@ int main(int argc, const char* argv[])
 
 	bool isPrintVersion = false, 
 		isUpdateMesonBuild = false,
-		isMesonBuildTemplatePath = false,
 		isExecutePreConfigHook = false,
 		isForce = false;
 	std::string directory;
 	app.add_flag("--version", isPrintVersion, "Prints version number of Build Master");
 	app.add_flag("--update-meson-build", isUpdateMesonBuild, "Regenerates the meson.build script if the build_master.json file is more recent");
-	app.add_flag("--meson-build-template-path", isMesonBuildTemplatePath, "Prints lookup path of meson.build.template, typically this is only for debugging purpose");
 	app.add_flag("--execute-pre-config-hook", isExecutePreConfigHook, "Executes pre_config_hook (shell script) if any");
 	app.add_flag("--force", isForce, "if --update-meson-build flag is present along with this --force then meson.build script is generated even if it is upto date");
 	app.add_option("--directory", directory, "Directory path in which to look for build_master.json, by default it is the current working directory");
@@ -271,11 +269,6 @@ int main(int argc, const char* argv[])
 	if(isUpdateMesonBuild)
 	{
 		RegenerateMesonBuildScript(directory, isForce);
-		return EXIT_SUCCESS;
-	}
-	if(isMesonBuildTemplatePath)
-	{
-		spdlog::info("MESON_BUILD_TEMPLATE_PATH: {}", MESON_BUILD_TEMPLATE_PATH);
 		return EXIT_SUCCESS;
 	}
 	if(isExecutePreConfigHook)
