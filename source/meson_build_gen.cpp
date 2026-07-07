@@ -1,6 +1,7 @@
 #include <build_master/misc.hpp> // for LoadTextFile(), and GetPathStrRelativeToDir()
 #include <build_master/json_parse.hpp> // for ParseBuildMasterJson(), and GetJsonKeyValue<>()
 #include <build_master/version.hpp>
+#include <build_master/meson_build_template.hpp>
 
 #include <iostream>
 #include <cstdlib>
@@ -39,9 +40,7 @@ static bool IsRegenerateMesonBuildScript(std::string_view directory)
 
 static std::string LoadMesonBuildScriptTemplate()
 {
-	std::string_view str = MESON_BUILD_TEMPLATE_PATH;
-	std::cout << "MESON_BUILD_TEMPLATE_PATH: " << str << "\n";
-	return LoadTextFile(str);
+	return std::string { MESON_BUILD_TEMPLATE_STR };
 }
 
 using TokenTransformCallback = std::function<std::string(std::string_view)>;

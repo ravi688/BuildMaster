@@ -38,10 +38,6 @@ debug_defines = [
   '-DBUILD_MASTER_DEBUG'
 ]
 
-dest_dir = get_option('prefix')
-
-meson_build_template_install_dir = join_paths(dest_dir, get_option('datadir'), 'build_master')
-
 git_commit_id = run_command('git', 'rev-parse', 'HEAD', check : true).stdout().strip()
 
 defines = [
@@ -49,7 +45,6 @@ defines = [
   '-DBUILDMASTER_VERSION_MAJOR=' + meson.project_version().split('.')[0],
   '-DBUILDMASTER_VERSION_MINOR=' + meson.project_version().split('.')[1],
   '-DBUILDMASTER_VERSION_MICRO=' + meson.project_version().split('.')[2], 
-  '-DMESON_BUILD_TEMPLATE_PATH="' + join_paths(meson_build_template_install_dir, 'meson.build.template') + '"'
 ]
 
 # Include directories
@@ -112,5 +107,3 @@ executable('build_master',
   include_directories : inc,
   install : true
 )
-
-install_data('meson.build.template', install_dir : meson_build_template_install_dir)
