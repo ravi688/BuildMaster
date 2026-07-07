@@ -31,7 +31,7 @@ static std::vector<std::string> BuildArgumentsForCmdRun(std::string_view cmdName
 {
   	std::vector<std::string> finalArgs;
   	finalArgs.reserve(restArgs.size() + 1);
-  	auto paths = invoke::GetExecutablePaths(cmdName);
+  	auto paths = invoke::FindExecutable(cmdName);
   	if(!paths)
   	{
   		spdlog::error("Couldn't find paths for the executable: {}", cmdName);
