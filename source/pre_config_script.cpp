@@ -13,7 +13,7 @@ static std::optional<bool> RunPreConfigScript(const json& buildMasterJson, std::
 	if(auto result = GetJsonKeyValueOrNull<std::string>(buildMasterJson, hookName); result.has_value())
 	{
 		spdlog::info(logMsg);
-		std::optional<std::vector<std::string>> bashPaths = invoke::GetExecutablePaths(gBash);
+		std::optional<std::vector<std::string>> bashPaths = invoke::FindExecutable(gBash);
 		if(!bashPaths)
 		{
 			spdlog::error("No path found for {}", gBash);
